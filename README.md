@@ -323,7 +323,7 @@ Evidence of iteration over time (the rubric's "genuine effort"):
 
 ## AI usage, collaborators & integrity
 
-- **Author:** Hans (CS153). Solo project.
+- **Author:** Han Lee (CS153). Solo project.
 - **AI assistance — disclosed.** This project was built with substantial help
   from **Claude Code (Anthropic)** acting as a pair-programming assistant:
   drafting and refactoring model/training/Modal code, designing the web
