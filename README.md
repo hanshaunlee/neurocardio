@@ -9,7 +9,16 @@ inter-patient, and served as a public Modal web app.
 > energy per inference** than a parameter-matched CNN, for a **3.6 pp** macro-AUROC
 > price — a concrete data point on the neuromorphic accuracy/energy trade-off.
 
-This is the second-generation model in this repository. The first version
+**This project is a pivot.** It began as
+[**UniMarket**](https://github.com/hanshaunlee/unimarket) — a framework for
+*learning neural dynamics from electrophysiology data* with strict
+anti-over-claiming safeguards (the origin of this repo's `cs153-brain` name).
+I carried the core interest — **brain-inspired, biologically-grounded
+computation** — but pivoted from *modeling* brain dynamics to *building with*
+them: applying spiking (neuromorphic) networks to a problem with a sharp,
+measurable payoff — clinical ECG diagnosis at a fraction of the energy.
+
+Within this repository it's also the second-generation model. The first version
 (`archive/cardiospike_mitbih/`) was a small SNN for single-beat
 arrhythmia classification on MIT-BIH. NeuroCardio scales the same idea
 to clinical-grade multi-label diagnosis on a real benchmark dataset, with
@@ -283,10 +292,44 @@ If you have an A100 quota, change `gpu="A10G"` → `gpu="A100"` in
 `modal_app/app.py` (training is GPU-bound on the LIF Python loops,
 so you'll see a ~2–3× speed-up).
 
+### How long training took on Modal
+
+All training ran on a single **Modal A10G** GPU. `train.py` writes a cumulative
+`wallclock_seconds` into every epoch of `history.json`, so these are recorded
+times, not estimates:
+
+| Run | Epochs | GPU time | ~Per-epoch |
+|-----|-------:|---------:|-----------:|
+| **SNN (`main`)** | 200 | ≈ 12–14 h (within the `--wallclock-hours 14` budget) | **~3.5 min/epoch** |
+| CNN1D baseline | 80 | ~5 min | ~4 s/epoch |
+| ResNet1D baseline | 80 | ~5 min | ~4 s/epoch |
+
+The SNN is **~50× slower per epoch** than the dense baselines for the same data
+and pipeline. The reason is structural, not a tuning failure: every forward pass
+unrolls LIF membrane dynamics across ~500 time-steps and backprops through all of
+them (BPTT), where the CNN/ResNet do a single dense pass. This per-epoch cost is
+also why the energy story is reported from operation counts rather than wall-clock
+— the slowness is a PyTorch simulation artifact of stepping LIF neurons in a
+Python loop, not a property of the model on neuromorphic hardware.
+
+Because a 12–14 h run far exceeds Modal's A10G preemption window, the `main` run
+did **not** complete in one sitting. It was checkpointed every ~10 min to the
+`neurocardio-vol` Volume and **resumed from `best.pt` across several preemptions**
+(preempted at ep 28 → resumed past ep 83 → Volume held checkpoints to ep 153 →
+final resume carried it to 200). So *calendar* time spanned ~2 days even though
+*billed GPU* time was the ~12–14 h above. The resume logic in `train.py` exists
+specifically to make this survivable.
+
 ## Process & development history
 
 Evidence of iteration over time (the rubric's "genuine effort"):
 
+- **The pivot.** The project started as
+  [**UniMarket**](https://github.com/hanshaunlee/unimarket), a framework for
+  learning neural dynamics from electrophysiology data. I kept the through-line —
+  biologically-grounded, brain-inspired computation — but pivoted from *analysing*
+  neural dynamics to *deploying* them as spiking networks on a concrete clinical
+  task with a measurable energy payoff. NeuroCardio is the result of that pivot.
 - **v1 → v2.** `archive/cardiospike_mitbih/` is the first-gen single-beat SNN on
   MIT-BIH; NeuroCardio is the ground-up rewrite for clinical multi-label PTB-XL.
 - **A resumable training saga.** The `main` SNN run was preempted on Modal A10G
