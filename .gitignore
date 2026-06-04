@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.DS_Store
+
+# Training checkpoints (use Modal Volume or local runs/)
+runs/
+*.pt
+*.pth
+
+# Full PTB-XL download (see README / modal data_prep)
+data/ptbxl/
+
+# Archive v1 binary datasets
+archive/cardiospike_mitbih/data_processed/
+archive/cardiospike_mitbih/data_mitdb/
+
+# Editor
+.cursor/

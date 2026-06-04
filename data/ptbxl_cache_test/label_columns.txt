@@ -1,0 +1,5 @@
+NORM
+MI
+STTC
+CD
+HYP

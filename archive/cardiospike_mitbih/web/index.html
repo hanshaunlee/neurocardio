@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CardioSpike — Spiking Neural Networks for ECG Arrhythmia Detection</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo-dot"></span>
+    <span class="brand-name">CardioSpike</span>
+    <span class="brand-sub">Spiking Neural Networks for ECG Arrhythmia Detection</span>
+  </div>
+  <div class="stats" id="topStats">
+    <div class="stat"><div class="stat-num" id="statAcc">—</div><div class="stat-lab">overall acc</div></div>
+    <div class="stat"><div class="stat-num" id="statF1">—</div><div class="stat-lab">macro-F1</div></div>
+    <div class="stat"><div class="stat-num" id="statEnergy">—</div><div class="stat-lab">syn-op savings</div></div>
+    <div class="stat"><div class="stat-num" id="statParams">—</div><div class="stat-lab">parameters</div></div>
+    <div class="stat"><div class="stat-num" id="statBeats">—</div><div class="stat-lab">test beats</div></div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="kicker">Trained on MIT-BIH Arrhythmia Database · inter-patient DS1→DS2 split (de Chazal et&nbsp;al., 2004)</div>
+  <h1>A brain-inspired model that reads a heart, spike by spike.</h1>
+  <p class="lede">
+    Continuous ECG voltage is converted into a stream of asynchronous events
+    using delta modulation — the same trick a silicon retina uses for light.
+    Those events propagate through a stack of leaky integrate-and-fire neurons
+    trained with surrogate-gradient BPTT. The model's hidden layers fire on
+    only a small fraction of timesteps, so on neuromorphic hardware it would
+    burn a fraction of the energy a dense CNN does to make the same call.
+  </p>
+</section>
+
+<main>
+<section class="card live">
+  <div class="card-header">
+    <h2>Live ECG stream → spikes → prediction</h2>
+    <div class="card-sub">Replay of MIT-BIH record <span class="mono">200</span> (DS2 test set). Every visual element is driven by the trained SNN — no animation tricks.</div>
+    <div class="controls">
+      <button id="playBtn" class="btn primary">⏸ Pause</button>
+      <label class="speed">speed <input id="speedSlider" type="range" min="0.3" max="3" step="0.1" value="1.2" /></label>
+    </div>
+  </div>
+
+  <div class="live-grid">
+    <div class="lane">
+      <div class="lane-label">ECG (mV, normalized)</div>
+      <canvas id="ecgCanvas" height="140"></canvas>
+    </div>
+    <div class="lane">
+      <div class="lane-label">Δ-encoded input spikes &nbsp;<span class="legend on">●</span>ON <span class="legend off">●</span>OFF</div>
+      <canvas id="inputSpikeCanvas" height="80"></canvas>
+    </div>
+    <div class="lane">
+      <div class="lane-label">Hidden layer 3 — 64 conv-LIF channels</div>
+      <canvas id="l3Canvas" height="140"></canvas>
+    </div>
+    <div class="lane">
+      <div class="lane-label">Hidden layer 4 — 128 dense-LIF neurons (evidence accumulation)</div>
+      <canvas id="l4Canvas" height="110"></canvas>
+    </div>
+    <div class="lane prediction-lane">
+      <div class="lane-label">Beat classification (live)</div>
+      <div id="predBars" class="pred-bars"></div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-header">
+    <h2>Per-class anatomy</h2>
+    <div class="card-sub">Pick an AAMI class. We show a real DS2 test beat, its delta-encoded input, the spike raster of conv layer 3, and the output-neuron membrane potentials integrating to a decision.</div>
+  </div>
+  <div class="class-tabs" id="classTabs"></div>
+  <div class="anatomy">
+    <div class="anat-block">
+      <div class="anat-label">Raw ECG (260 samples ≈ 722 ms)</div>
+      <canvas id="anEcg" height="160"></canvas>
+    </div>
+    <div class="anat-block">
+      <div class="anat-label">Δ-encoded spikes (ON = red, OFF = blue)</div>
+      <canvas id="anIn" height="100"></canvas>
+    </div>
+    <div class="anat-block">
+      <div class="anat-label">Conv-LIF layer 3 spike raster · 64 channels × 32 t-steps</div>
+      <canvas id="anL3" height="220"></canvas>
+    </div>
+    <div class="anat-block">
+      <div class="anat-label">Output neuron membrane potential (logit accumulation, T<sub>dense</sub> steps)</div>
+      <canvas id="anVout" height="180"></canvas>
+    </div>
+  </div>
+  <div class="anat-decision">
+    <div id="anatDecision"></div>
+  </div>
+</section>
+
+<section class="card two-col">
+  <div class="card-half">
+    <div class="card-header"><h2>Confusion matrix · DS2 hold-out</h2>
+      <div class="card-sub">Rows = true class, columns = predicted. Diagonal weight is recall; off-diagonals show where mistakes go.</div>
+    </div>
+    <div id="cmatrix" class="cmatrix"></div>
+  </div>
+  <div class="card-half">
+    <div class="card-header"><h2>Synaptic-operation budget</h2>
+      <div class="card-sub">Per beat, MAC-equivalent operations. The SNN cost is gated by measured input spike rates per layer — the speedup an event-driven chip would see.</div>
+    </div>
+    <div id="energyChart" class="energy-chart"></div>
+    <div id="energyTotal" class="energy-total"></div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-header">
+    <h2>Why this is a spiking model, not just a CNN with extra steps</h2>
+  </div>
+  <ul class="why-list">
+    <li><strong>Event-driven input.</strong> A delta-modulation encoder turns
+      analog mV into binary {ON, OFF} events. Quiet ECG segments emit zero
+      events; QRS complexes emit dense bursts. This is the same input
+      modality a real silicon-retina / cochlea pushes onto neuromorphic chips.</li>
+    <li><strong>Leaky integrate-and-fire neurons everywhere.</strong> Every
+      hidden unit has a membrane potential <em>V(t) = β·V(t−1) + I(t)</em>;
+      it fires when V crosses 1 and resets. There is no ReLU anywhere in
+      the network.</li>
+    <li><strong>Surrogate-gradient BPTT.</strong> The non-differentiable
+      spike function is bypassed during backprop using a fast-sigmoid
+      surrogate, exactly as in <em>Neftci et al. 2019</em>. Time is folded
+      back through the unrolled network on the backward pass.</li>
+    <li><strong>Sparse hidden activity.</strong> Measured spike rates per
+      layer are reported above — they are well below 50%, which is the
+      regime where neuromorphic silicon (Loihi, SpiNNaker) wins on energy.</li>
+    <li><strong>Honest evaluation.</strong> Patients in the training set
+      never appear in the test set. This is the AAMI-recommended
+      inter-patient protocol; intra-patient scores in the literature are
+      a known overestimate.</li>
+  </ul>
+</section>
+
+<footer>
+  Built with <span class="mono">snntorch</span> + <span class="mono">PyTorch</span> · trained on Apple Silicon MPS · data: MIT-BIH Arrhythmia Database (PhysioNet).
+</footer>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

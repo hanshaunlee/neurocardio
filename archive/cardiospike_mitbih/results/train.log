@@ -1,0 +1,33 @@
+Device: mps
+Train: torch.Size([51002, 260]), Test: torch.Size([49692, 260])
+Class weights: {'N': 0.051, 'S': 0.357, 'V': 0.178, 'F': 0.539, 'Q': 3.875}
+Params: 272,469
+ep 01  loss 0.6003  train_acc 0.8140  val_acc 0.8597  macro_f1 0.3926  per_class_f1 ['0.93', '0.25', '0.72', '0.05', '0.00']  (22.8s)
+  saved best (macro_f1=0.3926) → /Users/hl/Documents/builds/cs153-brain/models/cardiospike_best.pt
+ep 02  loss 0.2355  train_acc 0.9230  val_acc 0.8320  macro_f1 0.3922  per_class_f1 ['0.91', '0.19', '0.74', '0.06', '0.05']  (23.2s)
+ep 03  loss 0.1707  train_acc 0.9425  val_acc 0.8391  macro_f1 0.3842  per_class_f1 ['0.92', '0.23', '0.71', '0.04', '0.02']  (22.5s)
+ep 04  loss 0.1362  train_acc 0.9536  val_acc 0.8221  macro_f1 0.4004  per_class_f1 ['0.90', '0.29', '0.78', '0.03', '0.00']  (22.7s)
+  saved best (macro_f1=0.4004) → /Users/hl/Documents/builds/cs153-brain/models/cardiospike_best.pt
+ep 05  loss 0.1257  train_acc 0.9567  val_acc 0.8435  macro_f1 0.4002  per_class_f1 ['0.92', '0.22', '0.79', '0.04', '0.04']  (22.6s)
+ep 06  loss 0.1163  train_acc 0.9604  val_acc 0.8568  macro_f1 0.4031  per_class_f1 ['0.93', '0.25', '0.78', '0.04', '0.02']  (22.8s)
+  saved best (macro_f1=0.4031) → /Users/hl/Documents/builds/cs153-brain/models/cardiospike_best.pt
+ep 07  loss 0.1059  train_acc 0.9624  val_acc 0.8403  macro_f1 0.3867  per_class_f1 ['0.92', '0.24', '0.72', '0.05', '0.00']  (23.0s)
+ep 08  loss 0.0851  train_acc 0.9706  val_acc 0.8386  macro_f1 0.3833  per_class_f1 ['0.92', '0.22', '0.70', '0.08', '0.00']  (22.7s)
+ep 09  loss 0.0761  train_acc 0.9741  val_acc 0.8348  macro_f1 0.3769  per_class_f1 ['0.91', '0.22', '0.70', '0.05', '0.00']  (22.6s)
+ep 10  loss 0.0711  train_acc 0.9761  val_acc 0.8479  macro_f1 0.3992  per_class_f1 ['0.92', '0.27', '0.71', '0.09', '0.00']  (22.7s)
+ep 11  loss 0.0637  train_acc 0.9783  val_acc 0.8613  macro_f1 0.3904  per_class_f1 ['0.93', '0.20', '0.73', '0.08', '0.00']  (22.8s)
+ep 12  loss 0.0564  train_acc 0.9814  val_acc 0.8402  macro_f1 0.3815  per_class_f1 ['0.92', '0.22', '0.67', '0.09', '0.00']  (22.7s)
+ep 13  loss 0.0597  train_acc 0.9795  val_acc 0.8444  macro_f1 0.3949  per_class_f1 ['0.92', '0.29', '0.66', '0.10', '0.00']  (22.7s)
+ep 14  loss 0.0542  train_acc 0.9816  val_acc 0.8683  macro_f1 0.4153  per_class_f1 ['0.93', '0.30', '0.73', '0.12', '0.00']  (22.6s)
+  saved best (macro_f1=0.4153) → /Users/hl/Documents/builds/cs153-brain/models/cardiospike_best.pt
+ep 15  loss 0.0479  train_acc 0.9831  val_acc 0.8592  macro_f1 0.3867  per_class_f1 ['0.93', '0.24', '0.70', '0.07', '0.00']  (22.8s)
+ep 16  loss 0.0472  train_acc 0.9839  val_acc 0.8572  macro_f1 0.3952  per_class_f1 ['0.93', '0.23', '0.73', '0.10', '0.00']  (23.1s)
+ep 17  loss 0.0408  train_acc 0.9861  val_acc 0.8561  macro_f1 0.3892  per_class_f1 ['0.93', '0.20', '0.72', '0.10', '0.00']  (22.7s)
+ep 18  loss 0.0397  train_acc 0.9862  val_acc 0.8641  macro_f1 0.3981  per_class_f1 ['0.93', '0.24', '0.72', '0.10', '0.00']  (22.6s)
+ep 19  loss 0.0345  train_acc 0.9882  val_acc 0.8646  macro_f1 0.4002  per_class_f1 ['0.93', '0.25', '0.72', '0.10', '0.00']  (22.6s)
+ep 20  loss 0.0320  train_acc 0.9890  val_acc 0.8637  macro_f1 0.3965  per_class_f1 ['0.93', '0.24', '0.71', '0.10', '0.00']  (22.8s)
+ep 21  loss 0.0315  train_acc 0.9889  val_acc 0.8645  macro_f1 0.3946  per_class_f1 ['0.93', '0.23', '0.70', '0.11', '0.00']  (22.7s)
+ep 22  loss 0.0310  train_acc 0.9899  val_acc 0.8649  macro_f1 0.3949  per_class_f1 ['0.93', '0.22', '0.70', '0.12', '0.00']  (22.6s)
+
+Best macro-F1: 0.4153
+Model: /Users/hl/Documents/builds/cs153-brain/models/cardiospike_best.pt
