@@ -1,0 +1,42 @@
+{
+  "cache_dir": "/vol/ptbxl_cache",
+  "output_dir": "/vol/runs/resnet_baseline",
+  "label_set": "diagnostic_superclass",
+  "model_name": "resnet",
+  "sampling_rate": 100,
+  "train_folds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "val_folds": [
+    9
+  ],
+  "test_folds": [
+    10
+  ],
+  "batch_size": 128,
+  "num_workers": 4,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "epochs": 80,
+  "warmup_epochs": 3,
+  "pos_weight_mode": "sqrt",
+  "pos_weight_cap": 8.0,
+  "theta": 0.15,
+  "ema_decay": 0.999,
+  "grad_clip": 1.0,
+  "seed": 0,
+  "save_every": 1,
+  "eval_use_ema": true,
+  "device": "cuda",
+  "log_every": 50,
+  "wallclock_hours": 4.0,
+  "max_steps_per_epoch": 0,
+  "resume": true
+}

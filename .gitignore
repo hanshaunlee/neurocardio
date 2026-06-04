@@ -11,6 +11,11 @@ runs/
 *.pt
 *.pth
 
+# Canonical final artifacts — kept in-repo for reproducibility (overrides *.pt)
+!results/
+!results/**/*.pt
+!results/**/*.json
+
 # Full PTB-XL download (see README / modal data_prep)
 data/ptbxl/
 

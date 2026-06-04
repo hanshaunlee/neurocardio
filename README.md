@@ -12,7 +12,7 @@ inter-patient, and served as a public Modal web app.
 **This project is a pivot.** It began as
 [**UniMarket**](https://github.com/hanshaunlee/unimarket) — a framework for
 *learning neural dynamics from electrophysiology data* with strict
-anti-over-claiming safeguards (the origin of this repo's `cs153-brain` name).
+anti-over-claiming safeguards.
 I carried the core interest — **brain-inspired, biologically-grounded
 computation** — but pivoted from *modeling* brain dynamics to *building with*
 them: applying spiking (neuromorphic) networks to a problem with a sharp,
@@ -27,18 +27,18 @@ literature.
 
 ---
 
-## How this project maps to the CS153 rubric (15 pts)
+## Reader's guide
 
-This section is a reviewer's index — every claim below links to the code,
-data, or figure that backs it. Detail follows in the rest of the README.
+A quick index — every claim in this project links to the code, data, or figure
+that backs it. Detail follows in the rest of the README.
 
-| Rubric area | Where it's addressed |
+| Topic | Where it's addressed |
 |---|---|
-| **Problem & Insight** (3) | [Problem & motivation](#problem--motivation) · [What's novel](#whats-novel) |
-| **Execution & Technical Work** (5) | [Architecture](#architecture) · [Repo layout](#layout) · [Run it](#run-it) · live demo |
-| **Evaluation & Evidence** (3) | [Results & evaluation](#results--evaluation) · [Baseline comparison](#baseline-comparison) · [Failure analysis](#failure-analysis) |
-| **Communication & Presentation** (2) | This README · the [live web demo](https://hanshaunlee--neurocardio-web.modal.run) · reproducible [Run it](#run-it) |
-| **Process, Integrity & Disclosure** (2) | [AI usage & attribution](#ai-usage-collaborators--integrity) · [Honest framing](#honest-framing) · [References](#references) |
+| **Problem & insight** | [Problem & motivation](#problem--motivation) · [What's novel](#whats-novel) |
+| **What was built** | [Architecture](#architecture) · [Repo layout](#layout) · [Run it](#run-it) · live demo |
+| **Evaluation & evidence** | [Results & evaluation](#results--evaluation) · [Baseline comparison](#baseline-comparison) · [Failure analysis](#failure-analysis) |
+| **Communication** | This README · the [live web demo](https://hanshaunlee--neurocardio-web.modal.run) · reproducible [Run it](#run-it) |
+| **Process & disclosure** | [AI usage & attribution](#ai-usage-collaborators--integrity) · [Honest framing](#honest-framing) · [References](#references) |
 
 ---
 
@@ -142,9 +142,23 @@ modal_app/
   app.py               Modal app (data_prep, train, list_runs, compare_models, web)
 web/
   index.html app.js style.css   front-end served by the Modal web function
+results/                        canonical final artifacts (committed, see below)
+  comparison.json                 energy/compute/accuracy source-of-truth
+  main/                           SNN: best.pt, latest.pt, history.json, test_metrics.json, config.json
+  cnn_baseline/  resnet_baseline/ dense baselines: same five files each
 archive/cardiospike_mitbih/     v1 (MIT-BIH single-beat) project for reference
 runs/                           local smoke-test run artifacts (configs, history, metrics)
 ```
+
+The `results/` directory holds the **final trained checkpoints and statistics**
+pulled from the Modal Volume, committed in-repo so every number in this README
+and the web demo is reproducible offline:
+
+- `results/main/best.pt` — the SNN checkpoint that produced the reported
+  0.8663 test macro-AUROC (epoch 155 by val AUROC).
+- `results/{cnn,resnet}_baseline/best.pt` — the parameter-matched dense baselines.
+- `results/comparison.json` — the regenerated energy/compute/accuracy table that
+  the web demo reads live (the source of truth for the headline numbers).
 
 ## Run it
 
@@ -160,9 +174,10 @@ modal run --detach modal_app/app.py::data_prep
 modal deploy modal_app/app.py
 # → prints a stable URL like https://<you>--neurocardio-web.modal.run
 
-# 3) Launch the detached SNN training run (200 epochs; ~12–14 h on A10G).
+# 3) Launch the detached SNN training run (200 epochs ≈ 34 h GPU @ ~10 min/epoch;
+#    8 h/session, auto-resumes from best.pt across preemptions).
 modal run --detach modal_app/app.py::train \
-  --run-name main --model snn --wallclock-hours 14
+  --run-name main --model snn --wallclock-hours 8
 
 # 4) Train dense baselines (each ~5 minutes on A10G).
 modal run --detach modal_app/app.py::train \
@@ -212,7 +227,7 @@ fold 10 (no patient overlap with train/val). `best.pt` = epoch 155
 
 | Model | Test macro-AUROC | Test AUPRC | Params |
 |-------|-----------------:|-----------:|-------:|
-| **SNN (NeuroCardio)** | **0.8663** | 0.6966 | 1,893,768 |
+| **SNN (NeuroCardio)** | **0.8663** | 0.6971 | 1,893,768 |
 | CNN1D baseline | 0.9023 | 0.7644 | 1,741,381 |
 | ResNet1D baseline | 0.9017 | 0.7663 | 1,879,685 |
 
@@ -231,15 +246,16 @@ test fold, not a simulated proxy.
 
 | Metric | SNN | CNN1D | vs CNN |
 |---|---:|---:|---:|
-| Effective ops / inference | **40.6 M SOPs** | 294.6 M MACs | **7.25× fewer** |
-| Mean spike rate (hidden) | **~12.6%** (87.4% silent) | 100% dense | — |
-| Energy / inference (est.) | **~4 µJ** | ~1.1 mJ | **~287× less** |
-| Energy vs ResNet1D | ~4 µJ | ~187 µJ | ~46× less |
+| Effective ops / inference | **~37.9 M SOPs** | 294.6 M MACs | **~7.8× fewer** |
+| Mean spike rate | **~10.9%** (≈89% silent) | 100% dense | — |
+| Energy / inference (est.) | **~3.8 µJ** | ~1.09 mJ | **~287× less** |
+| Energy vs ResNet1D | ~3.8 µJ | ~187 µJ | ~49× less |
 
-> `comparison.json` on the Modal Volume is the authoritative source of truth and
-> is regenerated by `compare_models`; the web demo's big numbers and prose are
-> filled live from it (nothing energy-related is hard-coded). The live headline
-> ratio is **287×** after the full run.
+> `comparison.json` (committed under [`results/`](results/) and regenerated by
+> `compare_models`) is the authoritative source of truth; the web demo's big
+> numbers and prose are filled live from it (nothing energy-related is
+> hard-coded). The live headline ratio is **287×** after the full run. The exact
+> values above are read from that file.
 
 ### Failure analysis
 
@@ -279,14 +295,15 @@ The web demo runs **all three** models on the same normalised signal at
 inference time and shows a side-by-side 3-model readout with per-model
 exact-match verdicts against ground truth.
 
-## Modal cost estimate
+## Modal resources
 
-| Resource          | When                  | ~Cost (Modal pricing, May 2026) |
-|-------------------|-----------------------|--------------------------------|
-| `data_prep` CPU   | one-time, ~15 min     | < $0.05                        |
-| `train` A10G GPU  | full 200-epoch run    | ~$15                           |
-| `web` T4 GPU      | on-demand, idle scales to zero | ~$0.01/visit (cold start) |
-| Volume storage    | always-on, ~3 GB raw + 1 GB cache | < $0.10/mo |
+| Resource          | When                                  |
+|-------------------|---------------------------------------|
+| `data_prep` CPU   | one-time, ~15 min                     |
+| `train` A10G GPU (SNN) | full 200-epoch run, ~34 h of GPU time (see timing above) |
+| `train` A10G GPU (baselines) | minutes per clean run, but many redone attempts |
+| `web` T4 GPU      | on-demand, idle scales to zero        |
+| Volume storage    | always-on, ~3 GB raw + 1 GB cache     |
 
 If you have an A100 quota, change `gpu="A10G"` → `gpu="A100"` in
 `modal_app/app.py` (training is GPU-bound on the LIF Python loops,
@@ -294,35 +311,46 @@ so you'll see a ~2–3× speed-up).
 
 ### How long training took on Modal
 
-All training ran on a single **Modal A10G** GPU. `train.py` writes a cumulative
-`wallclock_seconds` into every epoch of `history.json`, so these are recorded
-times, not estimates:
+**Important caveat up front:** the committed run logs (`history.json` on the
+`neurocardio-vol` Volume) only capture each model's *final, clean, end-to-end
+run*. They badly understate the real effort. Every model — and the **CNN and
+ResNet baselines especially** — failed and had to be **redone many times**
+(OOM, A10G preemptions, data-pipeline and config bugs) before a run completed
+cleanly, and each redo *overwrote* the previous attempt's logs in the same
+`runs/<name>/` directory. The detached training jobs were ephemeral Modal apps
+that have since been reaped, so the failed attempts are no longer individually
+recoverable. The clean-run numbers below are therefore a *floor*; the true
+wall-clock spent reaching them was many times higher across all three models.
 
-| Run | Epochs | GPU time | ~Per-epoch |
-|-----|-------:|---------:|-----------:|
-| **SNN (`main`)** | 200 | ≈ 12–14 h (within the `--wallclock-hours 14` budget) | **~3.5 min/epoch** |
-| CNN1D baseline | 80 | ~5 min | ~4 s/epoch |
-| ResNet1D baseline | 80 | ~5 min | ~4 s/epoch |
+What the surviving logs *do* show (read straight off `history.json`, where
+`train.py` records `wallclock_seconds` per epoch — not estimates):
 
-The SNN is **~50× slower per epoch** than the dense baselines for the same data
-and pipeline. The reason is structural, not a tuning failure: every forward pass
-unrolls LIF membrane dynamics across ~500 time-steps and backprops through all of
-them (BPTT), where the CNN/ResNet do a single dense pass. This per-epoch cost is
-also why the energy story is reported from operation counts rather than wall-clock
-— the slowness is a PyTorch simulation artifact of stepping LIF neurons in a
-Python loop, not a property of the model on neuromorphic hardware.
+| Run | Epochs | Per-epoch (median) | Final clean run | Sessions on record |
+|-----|-------:|-------------------:|----------------:|-------------------:|
+| **SNN (`main`)** | 200 | ~10.3 min | **≈ 34 h GPU** | 7 (6 preemptions/resumes) |
+| CNN1D baseline | 80 | ~4.3 s | ~5.7 min GPU | 1 (after many failed redos) |
+| ResNet1D baseline | 80 | ~2.9 s | ~3.9 min GPU | 1 (after many failed redos) |
 
-Because a 12–14 h run far exceeds Modal's A10G preemption window, the `main` run
-did **not** complete in one sitting. It was checkpointed every ~10 min to the
-`neurocardio-vol` Volume and **resumed from `best.pt` across several preemptions**
-(preempted at ep 28 → resumed past ep 83 → Volume held checkpoints to ep 153 →
-final resume carried it to 200). So *calendar* time spanned ~2 days even though
-*billed GPU* time was the ~12–14 h above. The resume logic in `train.py` exists
-specifically to make this survivable.
+Two honest readings of this table:
+
+- **The SNN's per-epoch cost is real and structural.** At ~10 min/epoch it is
+  ~150–200× slower *per epoch* than the dense baselines, because every forward
+  pass unrolls LIF membrane dynamics across ~500 time-steps and backprops through
+  all of them (BPTT) where the ANNs do a single dense pass. A ~34 h job far
+  exceeds Modal's A10G preemption window, so `main` ran across **7 sessions with 6
+  preemptions/resumes** (8 h budget each via `--wallclock-hours 8`),
+  checkpointing every ~10 min and resuming from `best.pt` to reach 200 epochs.
+  This is also why energy is reported from operation counts, not wall-clock — the
+  slowness is a PyTorch simulation artifact of stepping LIF neurons in a Python
+  loop, **not** a property of the model on neuromorphic hardware.
+- **The "5 minutes" for the baselines is misleading on its own.** That is only
+  the final successful pass. Getting each baseline to train end-to-end on the
+  full PTB-XL pipeline took many failed and re-launched runs; the quick final
+  number is the *result* of that debugging, not the cost of it.
 
 ## Process & development history
 
-Evidence of iteration over time (the rubric's "genuine effort"):
+Evidence of genuine iteration over time:
 
 - **The pivot.** The project started as
   [**UniMarket**](https://github.com/hanshaunlee/unimarket), a framework for
@@ -332,12 +360,16 @@ Evidence of iteration over time (the rubric's "genuine effort"):
   task with a measurable energy payoff. NeuroCardio is the result of that pivot.
 - **v1 → v2.** `archive/cardiospike_mitbih/` is the first-gen single-beat SNN on
   MIT-BIH; NeuroCardio is the ground-up rewrite for clinical multi-label PTB-XL.
-- **A resumable training saga.** The `main` SNN run was preempted on Modal A10G
-  multiple times. It resumed from `best.pt` on the `neurocardio-vol` Volume each
-  time (checkpoints committed every ~10 min by a background thread): original run
-  preempted at ep 28 → resumed past ep 83 → Volume held checkpoints to ep 153 →
-  final resume carried it to 200 epochs naturally. The resume machinery in
-  `train.py` exists *because* of this, not for show.
+- **A resumable training saga.** At ~10 min/epoch the `main` SNN run was a ~34 h
+  job — far longer than Modal's A10G preemption window — so it ran across **7
+  sessions with 6 preemptions/resumes**, checkpointing to the `neurocardio-vol`
+  Volume every ~10 min and resuming from `best.pt` each time to reach 200 epochs.
+  The resume machinery in `train.py` exists *because* of this, not for show.
+- **The baselines were not free either.** Their committed logs show a clean ~5 min
+  run, but each only succeeded after **many failed and re-launched attempts**
+  (OOM, preemption, pipeline/config bugs) whose logs were overwritten by the next
+  retry — the quick final number is the result of that debugging, not its cost.
+  See [How long training took on Modal](#how-long-training-took-on-modal).
 - **Web demo redesign.** The frontend was rebuilt around a live 3-model
   comparison, a data-driven energy ratio, PR-curve cards, and an animated ECG
   hero — all numbers sourced from `comparison.json` rather than hard-coded.
@@ -366,7 +398,7 @@ Evidence of iteration over time (the rubric's "genuine effort"):
 
 ## AI usage, collaborators & integrity
 
-- **Author:** Han Lee (CS153). Solo project.
+- **Author:** Han Lee. Solo project.
 - **AI assistance — disclosed.** This project was built with substantial help
   from **Claude Code (Anthropic)** acting as a pair-programming assistant:
   drafting and refactoring model/training/Modal code, designing the web
