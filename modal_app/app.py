@@ -492,14 +492,18 @@ def web():
         import torch
         out: dict = {}
         for key in BASELINE_RUNS:
-            b = _get_baseline(key)
-            if b is None:
-                continue
-            x = torch.from_numpy(np.ascontiguousarray(sig)).float().unsqueeze(0).to(b["dev"])
-            with torch.no_grad():
-                logits = b["model"](x)
-            probs = torch.sigmoid(logits)[0].cpu().numpy()
-            out[key] = {c: float(probs[i]) for i, c in enumerate(b["labels"])}
+            try:
+                b = _get_baseline(key)
+                if b is None:
+                    continue
+                x = torch.from_numpy(np.ascontiguousarray(sig)).float().unsqueeze(0).to(b["dev"])
+                with torch.no_grad():
+                    logits = b["model"](x)
+                probs = torch.sigmoid(logits)[0].cpu().numpy()
+                out[key] = {c: float(probs[i]) for i, c in enumerate(b["labels"])}
+            except Exception as e:
+                # A baseline must never break the core SNN inference path.
+                print(f"baseline {key} failed: {e}")
         return out
 
     def _resolve_ckpt():
@@ -527,9 +531,28 @@ def web():
         return _state["infer"]
 
     # -------- routes --------
+    def _asset_version() -> str:
+        """Short content hash of the CSS+JS so the asset URLs change only when
+        the files do. Defeats browser heuristic caching (StaticFiles serves a
+        1970 last-modified, which makes browsers cache for years)."""
+        import hashlib
+        h = hashlib.md5()
+        try:
+            for f in ("style.css", "app.js"):
+                h.update(Path(f"/web/{f}").read_bytes())
+            return h.hexdigest()[:8]
+        except Exception:
+            return "dev"
+
     @api.get("/")
     def index():
-        return FileResponse("/web/index.html")
+        from fastapi.responses import HTMLResponse
+        html = Path("/web/index.html").read_text()
+        ver = _asset_version()
+        html = html.replace("/static/style.css", f"/static/style.css?v={ver}")
+        html = html.replace("/static/app.js", f"/static/app.js?v={ver}")
+        # Always revalidate the HTML so a new deploy's asset hashes are picked up.
+        return HTMLResponse(html, headers={"Cache-Control": "no-cache, must-revalidate"})
 
     api.mount("/static", StaticFiles(directory="/web"), name="static")
 

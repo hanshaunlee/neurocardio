@@ -4,26 +4,40 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>NeuroCardio — Can a spiking neural network diagnose heart disease?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
 
+<!-- scroll progress -->
+<div class="scroll-progress" id="scrollProgress"></div>
+
 <!-- ══════════════════════════════════════════════════════════════════
-     HERO
+     TOPBAR
 ══════════════════════════════════════════════════════════════════ -->
 <header class="topbar">
-  <div class="brand">
+  <div class="brand" id="brandHome">
     <span class="logo-dot"></span>
-    <span class="brand-name">NeuroCardio</span>
+    <span class="brand-name">Neuro<span class="accent">Cardio</span></span>
   </div>
   <div id="runStatus"><div class="badge muted">loading…</div></div>
 </header>
 
-<section class="hero-full">
-  <div class="hero-bg-glow"></div>
+<!-- ══════════════════════════════════════════════════════════════════
+     SPIKE-RAIL NAVIGATION (scroll-spy)
+══════════════════════════════════════════════════════════════════ -->
+<nav class="spine" id="spine" aria-label="Section navigation"></nav>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════════════════════════ -->
+<section class="hero-full" id="top">
+  <canvas id="heroEcg"></canvas>
   <div class="hero-content">
     <div class="eyebrow">A neuromorphic computing experiment · PTB-XL · 21,837 ECGs</div>
-    <h1>Can a computer diagnose<br>heart disease using less power<br>than a blinking LED?</h1>
+    <h1>Can a computer diagnose<br>heart disease using <span class="grad">less power<br>than a blinking LED?</span></h1>
     <p class="hero-sub">
       Modern AI can read an electrocardiogram as well as a cardiologist —
       but it requires a data center to do it. This project asks whether a
@@ -36,6 +50,7 @@
       <div class="hf-label">less energy per diagnosis<br>for a 3.6 pp accuracy cost</div>
     </div>
   </div>
+  <div class="scroll-cue">scroll<span></span></div>
 </section>
 
 <article class="story">
@@ -43,7 +58,8 @@
 <!-- ══════════════════════════════════════════════════════════════════
      THE PROBLEM
 ══════════════════════════════════════════════════════════════════ -->
-<div class="prose-section">
+<div class="prose-section reveal" id="problem">
+  <div class="sec-kicker"><span class="n">01</span> · The problem</div>
   <h2>The problem with always-on AI</h2>
   <p>
     Cardiovascular disease kills roughly <strong>17 million people every year</strong> — more than
@@ -73,7 +89,8 @@
 <!-- ══════════════════════════════════════════════════════════════════
      THE INSIGHT
 ══════════════════════════════════════════════════════════════════ -->
-<div class="prose-section">
+<div class="prose-section reveal" id="insight">
+  <div class="sec-kicker"><span class="n">02</span> · The insight</div>
   <h2>Neurons don't run all the time</h2>
   <p>
     Your brain contains roughly 86 billion neurons, each one a tiny electrical device. But at any
@@ -100,14 +117,14 @@
 <!-- ══════════════════════════════════════════════════════════════════
      STAT BREAK
 ══════════════════════════════════════════════════════════════════ -->
-<div class="stat-break">
+<div class="stat-break reveal">
   <div class="sb-item">
-    <div class="sb-num">87%</div>
+    <div class="sb-num" data-count="87" data-suffix="%">87%</div>
     <div class="sb-desc">of SNN neurons are silent<br>at any given time-step</div>
   </div>
   <div class="sb-divider"></div>
   <div class="sb-item">
-    <div class="sb-num">37×</div>
+    <div class="sb-num" data-count="37" data-suffix="×">37×</div>
     <div class="sb-desc">cheaper per-operation cost<br>on neuromorphic silicon</div>
   </div>
   <div class="sb-divider"></div>
@@ -120,7 +137,8 @@
 <!-- ══════════════════════════════════════════════════════════════════
      THE EXPERIMENT
 ══════════════════════════════════════════════════════════════════ -->
-<div class="prose-section">
+<div class="prose-section reveal" id="data">
+  <div class="sec-kicker"><span class="n">03</span> · The data</div>
   <h2>The experiment</h2>
   <p>
     The claim sounds good. But does it hold up on a real clinical dataset, against real baselines,
@@ -134,9 +152,9 @@
   </p>
 </div>
 
-<div class="disease-explainer">
+<div class="disease-explainer reveal">
   <div class="de-item">
-    <div class="de-dot" style="background:#6df0a8"></div>
+    <div class="de-dot" style="background:#3ddc97;color:#3ddc97"></div>
     <div>
       <div class="de-name">NORM — Normal</div>
       <div class="de-desc">No pathology found. Normal sinus rhythm.</div>
@@ -144,7 +162,7 @@
     </div>
   </div>
   <div class="de-item">
-    <div class="de-dot" style="background:#ff5b6e"></div>
+    <div class="de-dot" style="background:#ff7a8a;color:#ff7a8a"></div>
     <div>
       <div class="de-name">MI — Myocardial Infarction</div>
       <div class="de-desc">Heart attack. Death of cardiac muscle from a blocked artery. Often shows as ST-elevation or Q-waves.</div>
@@ -152,7 +170,7 @@
     </div>
   </div>
   <div class="de-item">
-    <div class="de-dot" style="background:#ffb454"></div>
+    <div class="de-dot" style="background:#ff9f45;color:#ff9f45"></div>
     <div>
       <div class="de-name">STTC — ST/T-wave Change</div>
       <div class="de-desc">Altered repolarization pattern. Can indicate ischemia, drug effects, or electrolyte imbalance.</div>
@@ -160,7 +178,7 @@
     </div>
   </div>
   <div class="de-item">
-    <div class="de-dot" style="background:#5ad7ff"></div>
+    <div class="de-dot" style="background:#6bd5ff;color:#6bd5ff"></div>
     <div>
       <div class="de-name">CD — Conduction Disturbance</div>
       <div class="de-desc">Abnormal electrical pathway. Bundle-branch blocks, AV blocks, or pacing abnormalities.</div>
@@ -168,7 +186,7 @@
     </div>
   </div>
   <div class="de-item">
-    <div class="de-dot" style="background:#c9a4ff"></div>
+    <div class="de-dot" style="background:#c3a3ff;color:#c3a3ff"></div>
     <div>
       <div class="de-name">HYP — Hypertrophy</div>
       <div class="de-desc">Thickened chamber wall, often from chronic hypertension. The hardest class — fewest examples, subtlest signal.</div>
@@ -177,7 +195,7 @@
   </div>
 </div>
 
-<div class="prose-section">
+<div class="prose-section reveal">
   <p>
     A recording can carry multiple labels simultaneously — a patient can have both a conduction
     disturbance and signs of past infarction. This is a <strong>multi-label classification problem</strong>,
@@ -194,7 +212,8 @@
 <!-- ══════════════════════════════════════════════════════════════════
      THE MODEL
 ══════════════════════════════════════════════════════════════════ -->
-<div class="prose-section">
+<div class="prose-section reveal" id="network">
+  <div class="sec-kicker"><span class="n">04</span> · The network</div>
   <h2>The spiking network: S-TCN</h2>
   <p>
     The model is a <strong>Spiking Temporal Convolutional Network (S-TCN)</strong> — a deep network
@@ -202,7 +221,7 @@
   </p>
 </div>
 
-<div class="pipeline">
+<div class="pipeline reveal">
   <div class="pipe-step">
     <div class="pipe-num">1</div>
     <div class="pipe-body">
@@ -259,22 +278,24 @@
 <!-- ══════════════════════════════════════════════════════════════════
      LIVE DEMO
 ══════════════════════════════════════════════════════════════════ -->
-<div class="prose-section">
-  <h2>Try it: pick a real patient ECG</h2>
+<div class="prose-section reveal" id="demo">
+  <div class="sec-kicker"><span class="n">05</span> · Live demo</div>
+  <h2>Try it: one ECG, three models, side by side</h2>
   <p>
-    Every recording in the dropdown below is from fold 10 — the test set the model never saw.
-    Select one and watch the full inference pipeline run in real time. The model will show you
-    its spike patterns, what it's attending to, and its final diagnostic output alongside the
-    cardiologist's ground-truth label.
+    Every recording in the dropdown below is from fold 10 — the test set none of the models ever saw.
+    Pick one and watch the full SNN inference pipeline run in real time: its spike patterns, what it
+    attends to, and its final diagnosis. Then see <strong>the exact same recording run through the
+    CNN and ResNet baselines</strong>, so you can judge for yourself where the spiking network
+    agrees, where it differs, and what that 3.6-point accuracy gap actually looks like on a single heart.
   </p>
 </div>
 
-<div class="demo-shell">
+<div class="demo-shell reveal">
   <div class="demo-picker-row">
     <select id="examplePicker" class="picker">
       <option value="">— loading test recordings —</option>
     </select>
-    <button id="runBtn" class="btn primary">Run model</button>
+    <button id="runBtn" class="btn primary">Run all three models</button>
     <span class="picker-sep">or</span>
     <label class="btn">Upload .npy<input type="file" id="uploadInput" accept=".npy" hidden /></label>
     <span class="hint" id="runHint"></span>
@@ -282,6 +303,16 @@
 </div>
 
 <div class="demo-viz" id="demoViz">
+  <!-- multi-model verdict first: comparison is the point -->
+  <div class="viz-block">
+    <div class="viz-label">
+      <span class="vl-step">Diagnosis — all three models on this recording</span>
+      <span class="vl-sub">Sigmoid probability per AAMI class for each model. Truth from cardiologist annotation. Bars ≥ 50% = a positive call.</span>
+    </div>
+    <div id="readout" class="compare-readout"></div>
+    <div id="vsTruth" class="cr-verdict"></div>
+  </div>
+
   <div class="viz-block">
     <div class="viz-label">
       <span class="vl-step">Raw ECG</span>
@@ -292,7 +323,7 @@
 
   <div class="viz-block">
     <div class="viz-label">
-      <span class="vl-step">Step 1 — Delta-modulation spikes</span>
+      <span class="vl-step">SNN · Step 1 — Delta-modulation spikes</span>
       <span class="vl-sub">Only threshold crossings fire. Silence = no energy consumed.</span>
     </div>
     <canvas id="inSpikeCanvas" height="220"></canvas>
@@ -302,19 +333,19 @@
   <div class="viz-row">
     <div class="viz-block">
       <div class="viz-label">
-        <span class="vl-step">Step 2 — Final spiking block</span>
+        <span class="vl-step">SNN · Step 2 — Final spiking block</span>
         <span class="vl-sub">384 LIF channels after 6× dilated processing. Time axis shrunk ~16×.</span>
       </div>
       <canvas id="blockCanvas" height="240"></canvas>
     </div>
     <div class="viz-block">
       <div class="viz-label">
-        <span class="vl-step">Step 3 — Attention gate</span>
+        <span class="vl-step">SNN · Step 3 — Attention gate</span>
         <span class="vl-sub">Green = time-steps the gate LIF selected. Only these feed the classifier.</span>
       </div>
       <canvas id="poolCanvas" height="72"></canvas>
       <div class="viz-label" style="margin-top:16px">
-        <span class="vl-step">Step 4 — Output integrator</span>
+        <span class="vl-step">SNN · Step 4 — Output integrator</span>
         <span class="vl-sub">Evidence accumulation per class. Steep slope = confident diagnosis.</span>
       </div>
       <canvas id="voutCanvas" height="152"></canvas>
@@ -323,16 +354,7 @@
 
   <div class="viz-block">
     <div class="viz-label">
-      <span class="vl-step">Diagnosis</span>
-      <span class="vl-sub">Sigmoid probability per AAMI class. Truth from cardiologist annotation.</span>
-    </div>
-    <div id="readout" class="readout"></div>
-    <div id="vsTruth" class="vs-truth"></div>
-  </div>
-
-  <div class="viz-block">
-    <div class="viz-label">
-      <span class="vl-step">Layer-by-layer spike rate</span>
+      <span class="vl-step">SNN · Layer-by-layer spike rate</span>
       <span class="vl-sub">The fraction of neurons firing per step. Lower = less energy on neuromorphic hardware.</span>
     </div>
     <div id="sparsityChart" class="sparsity-chart"></div>
@@ -343,7 +365,8 @@
 <!-- ══════════════════════════════════════════════════════════════════
      THE FINDINGS
 ══════════════════════════════════════════════════════════════════ -->
-<div class="prose-section">
+<div class="prose-section reveal" id="results">
+  <div class="sec-kicker"><span class="n">06</span> · The results</div>
   <h2>The findings</h2>
   <p>
     We trained three models on the same data with the same training budget:
@@ -359,7 +382,7 @@
   </p>
 </div>
 
-<div class="results-reveal">
+<div class="results-reveal reveal">
   <div class="rr-row">
     <div class="rr-model snn">
       <div class="rr-name">SNN · NeuroCardio</div>
@@ -380,7 +403,7 @@
   <div class="rr-note">macro-AUROC · fold-10 test set · 2,158 held-out recordings</div>
 </div>
 
-<div class="prose-section">
+<div class="prose-section reveal">
   <p>
     The SNN scores <strong>0.8663</strong> versus the CNN's <strong>0.9023</strong> — a gap of
     3.6 percentage points. That sounds like a lot, but it comes with a tradeoff that changes the
@@ -388,7 +411,7 @@
   </p>
 </div>
 
-<section class="card-inset">
+<section class="card-inset reveal">
   <div class="card-header">
     <h3>Accuracy vs. baselines</h3>
     <div class="card-sub">Macro-AUROC and AUPRC on the held-out test fold. Higher = better. Parameter counts matched within 8%.</div>
@@ -396,7 +419,7 @@
   <canvas id="aurocBarCanvas" height="160"></canvas>
 </section>
 
-<section class="card-inset">
+<section class="card-inset reveal">
   <div class="card-header">
     <h3>Per-class AUROC breakdown</h3>
     <div class="card-sub">The SNN tracks the CNN closely on NORM, MI, and STTC. The gap is concentrated in HYP — the rarest and hardest class. CD improved substantially in later training epochs.</div>
@@ -404,18 +427,27 @@
   <canvas id="perClassCanvas" height="220"></canvas>
 </section>
 
-<section class="card-inset">
+<section class="card-inset reveal">
   <div class="card-header">
     <h3>ROC curves · per class · all three models</h3>
-    <div class="card-sub"><span style="color:#ff4d6d;font-weight:600">Solid red</span> = SNN · <span style="color:#5ad7ff">dashed blue</span> = CNN · <span style="color:#ffd166">dotted yellow</span> = ResNet. AUC labeled per model. Diagonal = random chance.</div>
+    <div class="card-sub"><span style="color:#ff5470;font-weight:700">solid red</span> = SNN · <span style="color:#48cae4">dashed azure</span> = CNN · <span style="color:#ffc44d">dotted amber</span> = ResNet. AUC labeled per model. Diagonal = random chance.</div>
   </div>
   <canvas id="rocCanvas" height="300"></canvas>
+</section>
+
+<section class="card-inset reveal">
+  <div class="card-header">
+    <h3>Precision–recall curves · per class</h3>
+    <div class="card-sub">Where ROC can flatter a model on imbalanced classes, PR curves don't. Same line styles. The dashed baseline in each panel is the class prevalence (a no-skill classifier). Telling for rare classes like HYP.</div>
+  </div>
+  <canvas id="prCanvas" height="300"></canvas>
 </section>
 
 <!-- ══════════════════════════════════════════════════════════════════
      THE ENERGY STORY
 ══════════════════════════════════════════════════════════════════ -->
-<div class="prose-section">
+<div class="prose-section reveal" id="energy">
+  <div class="sec-kicker"><span class="n">07</span> · The energy</div>
   <h2>Now look at the energy</h2>
   <p>
     The energy calculation uses the Horowitz (ISSCC 2014) constants, the standard reference
@@ -428,15 +460,15 @@
     "effective" meaning we measured the actual per-layer spike rates on the validation set
     and multiplied. At 0.1 pJ/SOP that's <strong>4.06 µJ</strong> per ECG window.
     The CNN performs 294.6 million MACs at 3.7 pJ each — <strong>1,090 µJ</strong>.
-    That's a factor of <strong>268×</strong>, driven by two compounding effects: fewer total ops,
+    That's a factor of <strong><span class="js-eratio">268</span>×</strong>, driven by two compounding effects: fewer total ops,
     and cheaper ops per unit.
   </p>
 </div>
 
-<section class="card-inset">
+<section class="card-inset reveal">
   <div class="card-header">
     <h3>Energy per inference</h3>
-    <div class="card-sub">SNN energy assumes neuromorphic hardware (Loihi). CNN and ResNet assume dense ASIC. The 268× gap comes from both fewer ops (7.25×) and cheaper ops per unit (37×).</div>
+    <div class="card-sub">SNN energy assumes neuromorphic hardware (Loihi). CNN and ResNet assume dense ASIC. The <span class="js-eratio">268</span>× gap comes from both fewer ops (7.25×) and cheaper ops per unit (37×).</div>
   </div>
   <canvas id="energyBarCanvas" height="140"></canvas>
   <div id="energyNote" class="compare-note" style="margin-top:12px"></div>
@@ -445,20 +477,19 @@
 <!-- ══════════════════════════════════════════════════════════════════
      THE IMPLICATION
 ══════════════════════════════════════════════════════════════════ -->
-<div class="prose-section">
-  <h2>What does 268× actually mean?</h2>
+<div class="prose-section reveal">
+  <h2>What does <span class="js-eratio">268</span>× actually mean?</h2>
   <p>
     Here's a concrete scenario: a wearable Holter monitor analyzing a 10-second ECG window
     every 10 seconds — 8,640 inferences over a 24-hour monitoring session.
   </p>
 </div>
 
-<div class="holter-comparison" id="holterComparison">
-  <!-- populated by JS -->
+<div class="holter-comparison reveal" id="holterComparison">
   <div class="hc-loading">loading energy calculations…</div>
 </div>
 
-<div class="prose-section">
+<div class="prose-section reveal">
   <p>
     The 3.6 pp AUROC gap is real. Whether it matters depends entirely on the deployment.
     For a <strong>wearable screening device</strong> — one that flags suspected pathology and
@@ -480,7 +511,7 @@
 <!-- ══════════════════════════════════════════════════════════════════
      COMPARISON TABLE
 ══════════════════════════════════════════════════════════════════ -->
-<section class="card-inset">
+<section class="card-inset reveal">
   <div class="card-header">
     <h3>Complete comparison</h3>
     <div class="card-sub">All metrics on fold-10 test set. MACs/SOPs counted analytically. Spike rates measured on validation fold. Latency on Modal T4 (B=1). <strong>Bold</strong> = best in column.</div>
@@ -492,7 +523,8 @@
 <!-- ══════════════════════════════════════════════════════════════════
      TRAINING
 ══════════════════════════════════════════════════════════════════ -->
-<div class="prose-section">
+<div class="prose-section reveal" id="training">
+  <div class="sec-kicker"><span class="n">08</span> · The training</div>
   <h2>Did the SNN actually converge?</h2>
   <p>
     A common concern with spiking networks is training instability. Surrogate-gradient
@@ -507,13 +539,13 @@
   </p>
 </div>
 
-<section class="card-inset">
+<section class="card-inset reveal">
   <div class="card-header">
     <h3>SNN training curve · 200 epochs</h3>
     <div class="card-sub">
-      <span style="color:#5ad7ff">Cyan</span> = val macro-AUROC ·
-      <span style="color:rgba(109,240,168,0.9)">dashed green</span> = running best ·
-      <span style="color:rgba(255,180,84,0.7)">orange</span> = train loss.
+      <span style="color:#48cae4">azure</span> = val macro-AUROC ·
+      <span style="color:#3ddc97">dashed green</span> = running best ·
+      <span style="color:#ffc44d">amber</span> = train loss.
       Thin lines = per-class AUROC. Best val-AUROC: 0.8748 at epoch 155.
     </div>
   </div>
@@ -526,10 +558,10 @@
 ══════════════════════════════════════════════════════════════════ -->
 <div class="story-footer">
   <div class="sf-grid">
-    <div><strong>Model</strong><br>S-TCN · 1,893,768 params · 6 dilated LIF blocks · snntorch 0.9.4 + PyTorch 2.4.1</div>
-    <div><strong>Dataset</strong><br><a href="https://physionet.org/content/ptb-xl/1.0.3/" target="_blank">PTB-XL 1.0.3 (PhysioNet)</a> · 21,837 recordings · 5 AAMI superclasses</div>
-    <div><strong>Training</strong><br>Modal A10G · cosine LR 1e-3 → 0 · AdamW · EMA=0.999 · 200 epochs · fold 1–8</div>
-    <div><strong>Energy reference</strong><br>Horowitz, ISSCC 2014 · 3.7 pJ/MAC (FP32) · 0.1 pJ/SOP (neuromorphic accumulate)</div>
+    <div><strong>Model</strong>S-TCN · 1,893,768 params · 6 dilated LIF blocks · snntorch 0.9.4 + PyTorch 2.4.1</div>
+    <div><strong>Dataset</strong><a href="https://physionet.org/content/ptb-xl/1.0.3/" target="_blank">PTB-XL 1.0.3 (PhysioNet)</a> · 21,837 recordings · 5 AAMI superclasses</div>
+    <div><strong>Training</strong>Modal A10G · cosine LR 1e-3 → 0 · AdamW · EMA=0.999 · 200 epochs · fold 1–8</div>
+    <div><strong>Energy reference</strong>Horowitz, ISSCC 2014 · 3.7 pJ/MAC (FP32) · 0.1 pJ/SOP (neuromorphic accumulate)</div>
   </div>
 </div>
 

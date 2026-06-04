@@ -20,3 +20,4 @@ archive/cardiospike_mitbih/data_mitdb/
 
 # Editor
 .cursor/
+.gstack/

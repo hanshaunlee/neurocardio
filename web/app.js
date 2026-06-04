@@ -8,7 +8,7 @@
 */
 
 const LEAD_NAMES  = ["I","II","III","aVR","aVL","aVF","V1","V2","V3","V4","V5","V6"];
-const CLASS_COLORS = { NORM:"#6df0a8", MI:"#ff5b6e", STTC:"#ffb454", CD:"#5ad7ff", HYP:"#c9a4ff" };
+const CLASS_COLORS = { NORM:"#3ddc97", MI:"#ff7a8a", STTC:"#ff9f45", CD:"#6bd5ff", HYP:"#c3a3ff" };
 const CLASS_DESC   = {
   NORM: "Normal sinus rhythm",
   MI:   "Myocardial Infarction",
@@ -17,7 +17,9 @@ const CLASS_DESC   = {
   HYP:  "Hypertrophy",
 };
 const MODEL_LABEL  = { snn:"SNN (NeuroCardio)", cnn:"CNN1D baseline", resnet:"ResNet1D baseline" };
-const MODEL_COLOR  = { snn:"#ff4d6d", cnn:"#5ad7ff", resnet:"#ffd166" };
+const MODEL_COLOR  = { snn:"#ff5470", cnn:"#48cae4", resnet:"#ffc44d" };
+const AXIS = "rgba(174,183,205,0.55)";   // axis-label ink (legible on dark)
+const GRID = "rgba(255,255,255,0.055)";
 const FS = 100, T_INPUT = 1000;
 
 let LAST = null, EXAMPLES = [], LABELS = [], CMP_DATA = null;
@@ -65,9 +67,9 @@ function drawECG(ecg) {
     const yMid=lead*laneH+laneH/2;
     ctx.fillStyle = lead%2===0 ? "rgba(255,255,255,0.012)" : "rgba(0,0,0,0)";
     ctx.fillRect(0, lead*laneH, w, laneH);
-    ctx.fillStyle="rgba(154,164,192,0.7)"; ctx.font="10px ui-monospace,monospace";
+    ctx.fillStyle="rgba(174,183,205,0.7)"; ctx.font="10px 'Space Mono',ui-monospace,monospace";
     ctx.fillText(LEAD_NAMES[lead], 6, lead*laneH+12);
-    ctx.strokeStyle = lead<3 ? "#5ad7ff" : (lead<6 ? "#7fe6c8" : "#ffd166");
+    ctx.strokeStyle = lead<3 ? "#6bd5ff" : (lead<6 ? "#5fe3b0" : "#ffc44d");
     ctx.lineWidth=1.2; ctx.beginPath();
     for (let i=0;i<T;i++) {
       const x=(i/(T-1))*w;
@@ -81,7 +83,7 @@ function drawECG(ecg) {
   for (let s=1; s<10; s++) {
     const x=(s*FS/(T-1))*w;
     ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
-    ctx.fillStyle="rgba(154,164,192,0.4)"; ctx.font="9px ui-monospace,monospace";
+    ctx.fillStyle="rgba(174,183,205,0.4)"; ctx.font="9px 'Space Mono',ui-monospace,monospace";
     ctx.fillText(s+"s", x+2, h-4);
   }
 }
@@ -95,13 +97,13 @@ function drawInputSpikes(events) {
   let onCount=0, offCount=0;
   for (const [ch,t] of events) {
     const isOn=ch<12, x=(t/(T_INPUT-1))*w, y=ch*laneH+laneH/2;
-    ctx.fillStyle = isOn ? "#ff5f7a" : "#5ad7ff";
+    ctx.fillStyle = isOn ? "#ff5470" : "#48cae4";
     ctx.fillRect(x-0.7, y-laneH*0.4, 1.4, laneH*0.8);
     isOn ? onCount++ : offCount++;
   }
   ctx.strokeStyle="rgba(255,255,255,0.15)"; ctx.lineWidth=0.8;
   ctx.beginPath(); ctx.moveTo(0,h/2); ctx.lineTo(w,h/2); ctx.stroke();
-  ctx.fillStyle="rgba(154,164,192,0.65)"; ctx.font="11px ui-monospace,monospace";
+  ctx.fillStyle="rgba(174,183,205,0.65)"; ctx.font="11px 'Space Mono',ui-monospace,monospace";
   ctx.fillText("ON  (rising)", 8, 14);
   ctx.fillText("OFF (falling)", 8, h/2+14);
   $("inputSpikeCount").textContent =
@@ -118,10 +120,10 @@ function drawBlockRaster(events, shape) {
   const [C,T]=shape;
   for (const [ch,t] of events) {
     const x=(t/Math.max(T-1,1))*w, y=(ch/C)*h;
-    ctx.fillStyle="#ffd166";
+    ctx.fillStyle="#ffc44d";
     ctx.fillRect(x-0.8, y, 1.6, Math.max(h/C-0.3,1.0));
   }
-  ctx.fillStyle="rgba(154,164,192,0.7)"; ctx.font="10px ui-monospace,monospace";
+  ctx.fillStyle="rgba(174,183,205,0.7)"; ctx.font="10px 'Space Mono',ui-monospace,monospace";
   ctx.fillText(`${C} channels`, 8,12);
   ctx.fillText(`${T} time-steps`, 8,26);
   const r=events.length/(C*T);
@@ -133,12 +135,12 @@ function drawPoolGates(events, T) {
   const c=$("poolCanvas");
   const {ctx,w,h}=setupCanvas(c);
   drawGrid(ctx,w,h,50);
-  ctx.fillStyle="#6df0a8";
+  ctx.fillStyle="#3ddc97";
   for (const [,t] of events) {
     const x=(t/Math.max(T-1,1))*w;
     ctx.fillRect(x-1.2, h*0.15, 2.4, h*0.7);
   }
-  ctx.fillStyle="rgba(154,164,192,0.7)"; ctx.font="11px ui-monospace,monospace";
+  ctx.fillStyle="rgba(174,183,205,0.7)"; ctx.font="11px 'Space Mono',ui-monospace,monospace";
   ctx.fillText(`${events.length} gate spikes (pools at ${((events.length/Math.max(T,1))*100).toFixed(1)}% of time-steps)`, 8, 14);
 }
 
@@ -162,42 +164,84 @@ function drawVout(vout) {
     });
     ctx.stroke();
     const lastY=h-((vout[i][Td-1]-ymin)/(ymax-ymin))*h;
-    ctx.fillStyle=CLASS_COLORS[cl]||"#aaa"; ctx.font="11px ui-monospace,monospace";
+    ctx.fillStyle=CLASS_COLORS[cl]||"#aaa"; ctx.font="11px 'Space Mono',ui-monospace,monospace";
     ctx.fillText(cl, w-26, lastY+4);
   });
 }
 
-// ─── readout bars ─────────────────────────────────────────────────────
+// ─── multi-model readout (SNN vs CNN vs ResNet on one ECG) ────────────
+const READOUT_MODELS = ["snn","cnn","resnet"];
 function drawReadout(result) {
-  const probs=result.probs;
-  const positive=LABELS.filter(c => (probs[c]||0)>=0.5);
-  $("readout").innerHTML = LABELS.map(c => {
-    const p=probs[c]||0, cls=p>=0.5?"read-row pos":"read-row neg";
-    return `<div class="${cls}">
-      <div class="read-name" style="color:${CLASS_COLORS[c]}">${c}</div>
-      <div class="read-desc">${CLASS_DESC[c]||c}</div>
-      <div class="read-track"><div class="read-fill" style="width:${(p*100).toFixed(1)}%"></div></div>
-      <div class="read-pct">${(p*100).toFixed(1)}%</div>
+  // compare_probs comes from the backend; fall back to SNN-only if absent.
+  const cp = result.compare_probs || { snn: result.probs };
+  const have = READOUT_MODELS.filter(m => cp[m]);
+  const truth = result.true_labels;
+  const truthSet = new Set(truth || []);
+
+  // header
+  const head = `<div class="cr-head">
+      <div class="cr-h-class">Class</div>
+      <div class="cr-h-snn">SNN</div>
+      <div class="cr-h-cnn">CNN</div>
+      <div class="cr-h-resnet">ResNet</div>
+      <div>truth</div>
     </div>`;
+
+  const rows = LABELS.map(c => {
+    const cells = READOUT_MODELS.map(m => {
+      if (!cp[m]) return `<div class="cr-cell"><div class="cr-bar"></div></div>`;
+      const p = cp[m][c] || 0, firing = p >= 0.5;
+      const col = MODEL_COLOR[m];
+      return `<div class="cr-cell ${firing?'firing':''}" style="color:${col}">
+          <div class="cr-bar"><div class="cr-fill" style="width:${(p*100).toFixed(1)}%;background:${col}"></div></div>
+          <div class="cr-pval">${(p*100).toFixed(0)}</div>
+        </div>`;
+    }).join("");
+    const isTrue = truthSet.has(c);
+    const tcell = truth
+      ? `<div class="cr-truth">${isTrue?'<span class="yes">●</span>':'<span class="no">·</span>'}</div>`
+      : `<div class="cr-truth"><span class="no">?</span></div>`;
+    return `<div class="cr-row">
+        <div class="cr-class" style="color:${CLASS_COLORS[c]}">
+          <span class="dotc" style="background:${CLASS_COLORS[c]}"></span>
+          <span class="nm">${c}</span>
+        </div>${cells}${tcell}</div>`;
   }).join("");
 
-  const truth=result.true_labels;
-  if (truth) {
-    const predSet=new Set(positive), truthSet=new Set(truth);
-    const tp=[...truthSet].filter(x=>predSet.has(x));
-    const fp=[...predSet].filter(x=>!truthSet.has(x));
-    const fn=[...truthSet].filter(x=>!predSet.has(x));
-    const ok=fp.length===0&&fn.length===0;
-    $("vsTruth").innerHTML = `
-      <span class="label">ground truth:</span>
-      ${truth.length ? truth.map(t=>`<span class="badge" style="color:${CLASS_COLORS[t]||'#fff'}">${t} — ${CLASS_DESC[t]||t}</span>`).join("") : '<span class="badge muted">none</span>'}
-      <span class="label">model ≥ 0.5:</span>
-      ${positive.length ? positive.map(t=>`<span class="badge" style="color:${CLASS_COLORS[t]||'#fff'}">${t}</span>`).join("") : '<span class="badge muted">none</span>'}
-      <span class="badge ${ok?'ok':'warn'}">${ok?'✓ exact match':`tp=${tp.length} fp=${fp.length} fn=${fn.length}`}</span>
-    `;
-  } else {
-    $("vsTruth").innerHTML=`<span class="label">no ground truth (uploaded file)</span>`;
+  $("readout").innerHTML = head + rows;
+
+  // verdict: who matched the cardiologist exactly?
+  const el = $("vsTruth");
+  if (!truth) {
+    el.innerHTML = `<span>Uploaded recording — no cardiologist ground truth to compare against. The bars above still show how all three trained models read this ECG.</span>`;
+    return;
   }
+  const verdicts = have.map(m => {
+    const pos = LABELS.filter(c => (cp[m][c]||0) >= 0.5);
+    const posSet = new Set(pos);
+    const tp = [...truthSet].filter(x => posSet.has(x)).length;
+    const fp = pos.filter(x => !truthSet.has(x)).length;
+    const fn = [...truthSet].filter(x => !posSet.has(x)).length;
+    const exact = fp===0 && fn===0;
+    return { m, exact, tp, fp, fn };
+  });
+  const truthTxt = truth.length
+    ? truth.map(t => `<strong style="color:${CLASS_COLORS[t]}">${t}</strong>`).join(", ")
+    : "<strong>NORM-only / none</strong>";
+  const vlines = verdicts.map(v => {
+    const name = MODEL_LABEL[v.m].replace(/ \(.*\)| baseline/,"");
+    const tag = v.exact
+      ? `<span class="agree">✓ exact match</span>`
+      : `<span class="disagree">tp ${v.tp} · fp ${v.fp} · fn ${v.fn}</span>`;
+    return `<span style="color:${MODEL_COLOR[v.m]};font-weight:700">${name}</span> ${tag}`;
+  }).join(" &nbsp;·&nbsp; ");
+  const nAgree = verdicts.filter(v=>v.exact).length;
+  const consensus = nAgree===have.length
+    ? `All ${have.length} models agree with the cardiologist here.`
+    : nAgree===0
+      ? `No model nailed every label — a genuinely hard recording.`
+      : `${nAgree} of ${have.length} models matched the cardiologist exactly.`;
+  el.innerHTML = `Ground truth: ${truthTxt}. &nbsp; ${consensus}<br>${vlines}`;
 }
 
 // ─── sparsity bars ────────────────────────────────────────────────────
@@ -231,7 +275,7 @@ function drawAurocBars(rows) {
   [0.5,0.6,0.7,0.8,0.9,1.0].forEach(v=>{
     const x=PAD.l+(v-0.4)/(1-0.4)*bw;
     ctx.beginPath(); ctx.moveTo(x,PAD.t); ctx.lineTo(x,PAD.t+bh); ctx.stroke();
-    ctx.fillStyle="rgba(154,164,192,0.5)"; ctx.font="10px ui-monospace,monospace";
+    ctx.fillStyle="rgba(174,183,205,0.5)"; ctx.font="10px 'Space Mono',ui-monospace,monospace";
     ctx.fillText(v.toFixed(1), x-8, PAD.t+bh+14);
   });
   const n=rows.length, bh2=Math.min(36,(bh-n*6)/n);
@@ -251,14 +295,14 @@ function drawAurocBars(rows) {
     ctx.fillStyle=col+"44";
     ctx.fillRect(x0, y+bh2*0.55, xAuprc-x0, bh2*0.4);
     // labels
-    ctx.fillStyle="#e6eaf2"; ctx.font=`600 12px ui-sans-serif,sans-serif`;
+    ctx.fillStyle="#e6eaf2"; ctx.font=`600 12px Manrope,ui-sans-serif,sans-serif`;
     ctx.fillText(MODEL_LABEL[r.model]||r.model, 4, y+bh2*0.4);
-    ctx.fillStyle=col; ctx.font="12px ui-monospace,monospace";
+    ctx.fillStyle=col; ctx.font="12px 'Space Mono',ui-monospace,monospace";
     ctx.fillText(`AUROC ${(r.macro_auroc*100).toFixed(1)}%`, xAuroc+5, y+bh2*0.4);
-    ctx.fillStyle=col+"cc"; ctx.font="10px ui-monospace,monospace";
+    ctx.fillStyle=col+"cc"; ctx.font="10px 'Space Mono',ui-monospace,monospace";
     ctx.fillText(`AUPRC ${(r.macro_auprc*100).toFixed(1)}%`, xAuprc+5, y+bh2*0.9);
   });
-  ctx.fillStyle="rgba(154,164,192,0.5)"; ctx.font="10px ui-monospace,monospace";
+  ctx.fillStyle="rgba(174,183,205,0.5)"; ctx.font="10px 'Space Mono',ui-monospace,monospace";
   ctx.fillText("macro-AUROC / AUPRC →", PAD.l, PAD.t-10);
 }
 
@@ -278,7 +322,7 @@ function drawPerClassBars(rows) {
   [0.6,0.7,0.8,0.9,1.0].forEach(v=>{
     const y=PAD.t+bh-(v-0.5)/(1-0.5)*bh;
     ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(PAD.l+bw,y); ctx.stroke();
-    ctx.fillStyle="rgba(154,164,192,0.5)"; ctx.font="9px ui-monospace,monospace";
+    ctx.fillStyle="rgba(174,183,205,0.5)"; ctx.font="9px 'Space Mono',ui-monospace,monospace";
     ctx.fillText(v.toFixed(1), 2, y+3);
   });
   labels.forEach((lbl,ci)=>{
@@ -295,10 +339,10 @@ function drawPerClassBars(rows) {
       ctx.strokeRect(bx, by, barW-1, barH);
     });
     // class label
-    ctx.fillStyle=CLASS_COLORS[lbl]||"#ccc"; ctx.font="bold 12px ui-sans-serif,sans-serif";
+    ctx.fillStyle=CLASS_COLORS[lbl]||"#ccc"; ctx.font="bold 12px Manrope,ui-sans-serif,sans-serif";
     ctx.textAlign="center";
     ctx.fillText(lbl, gx, PAD.t+bh+14);
-    ctx.fillStyle="rgba(154,164,192,0.55)"; ctx.font="9px ui-monospace,monospace";
+    ctx.fillStyle="rgba(174,183,205,0.55)"; ctx.font="9px 'Space Mono',ui-monospace,monospace";
     ctx.fillText(CLASS_DESC[lbl]||"", gx, PAD.t+bh+26);
     ctx.textAlign="left";
   });
@@ -307,7 +351,7 @@ function drawPerClassBars(rows) {
     const lx=PAD.l+i*110;
     ctx.fillStyle=MODEL_COLOR[r.model]||"#aaa";
     ctx.fillRect(lx, 6, 10, 10);
-    ctx.fillStyle="#e6eaf2"; ctx.font="10px ui-sans-serif,sans-serif";
+    ctx.fillStyle="#e6eaf2"; ctx.font="10px Manrope,ui-sans-serif,sans-serif";
     ctx.fillText(MODEL_LABEL[r.model]||r.model, lx+14, 16);
   });
 }
@@ -333,13 +377,13 @@ function drawEnergyBars(rows) {
     ctx.fillStyle=col;
     ctx.fillRect(PAD.l, y, xW, barH*0.65);
     // labels
-    ctx.fillStyle="#e6eaf2"; ctx.font=`600 12px ui-sans-serif,sans-serif`;
+    ctx.fillStyle="#e6eaf2"; ctx.font=`600 12px Manrope,ui-sans-serif,sans-serif`;
     ctx.fillText(MODEL_LABEL[r.model]||r.model, 4, y+barH*0.5);
-    ctx.fillStyle=col; ctx.font="11px ui-monospace,monospace";
+    ctx.fillStyle=col; ctx.font="11px 'Space Mono',ui-monospace,monospace";
     const tag=r.model==="snn"?" (neuromorphic)":" (GPU ASIC)";
     ctx.fillText(fmtJ(e)+tag, PAD.l+xW+5, y+barH*0.5);
   });
-  ctx.fillStyle="rgba(154,164,192,0.5)"; ctx.font="10px ui-monospace,monospace";
+  ctx.fillStyle="rgba(174,183,205,0.5)"; ctx.font="10px 'Space Mono',ui-monospace,monospace";
   ctx.fillText("estimated energy / inference →", PAD.l, PAD.t-6);
 }
 
@@ -407,17 +451,17 @@ function drawROCCurves(rows) {
         const fx=fpr[fpr.length-1], ty=tpr[tpr.length-1];
         // don't overlap — offset by model index
         const mi=["snn","cnn","resnet"].indexOf(r.model);
-        ctx.fillStyle=col+"dd"; ctx.font=`bold 9px ui-monospace,monospace`;
+        ctx.fillStyle=col+"dd"; ctx.font=`bold 9px 'Space Mono',ui-monospace,monospace`;
         ctx.fillText(auc, x0+pw*0.5+mi*26, y0+ph-6-mi*10);
       }
     });
     // label
-    ctx.fillStyle=CLASS_COLORS[lbl]||"#ccc"; ctx.font="bold 13px ui-sans-serif,sans-serif";
+    ctx.fillStyle=CLASS_COLORS[lbl]||"#ccc"; ctx.font="bold 13px Manrope,ui-sans-serif,sans-serif";
     ctx.textAlign="center"; ctx.fillText(lbl, x0+pw/2, y0+14); ctx.textAlign="left";
-    ctx.fillStyle="rgba(154,164,192,0.5)"; ctx.font="9px ui-monospace,monospace";
+    ctx.fillStyle="rgba(174,183,205,0.5)"; ctx.font="9px 'Space Mono',ui-monospace,monospace";
     ctx.textAlign="center"; ctx.fillText(CLASS_DESC[lbl]||"", x0+pw/2, y0+26); ctx.textAlign="left";
     // axis labels
-    ctx.fillStyle="rgba(154,164,192,0.4)"; ctx.font="9px ui-monospace,monospace";
+    ctx.fillStyle="rgba(174,183,205,0.4)"; ctx.font="9px 'Space Mono',ui-monospace,monospace";
     ctx.fillText("FPR", x0+pw*0.4, y0+ph+14);
     ctx.save(); ctx.translate(x0-18, y0+ph*0.5); ctx.rotate(-Math.PI/2);
     ctx.fillText("TPR", 0, 0); ctx.restore();
@@ -432,7 +476,70 @@ function drawROCCurves(rows) {
     ctx.setLineDash(item.dash);
     ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(lx+20,ly); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle="rgba(154,164,192,0.8)"; ctx.font="10px ui-sans-serif,sans-serif";
+    ctx.fillStyle="rgba(174,183,205,0.8)"; ctx.font="10px Manrope,ui-sans-serif,sans-serif";
+    ctx.fillText(MODEL_LABEL[item.model], lx+24, ly+3);
+  });
+}
+
+// ─── PR curves (per class · all three models) ─────────────────────────
+function drawPRCurves(rows) {
+  const c=$("prCanvas");
+  if (!c) return;
+  const {ctx,w,h}=setupCanvas(c);
+  ctx.clearRect(0,0,w,h);
+  if (!rows||!rows.length) return;
+  const labels=(rows[0].labels)||["NORM","MI","STTC","CD","HYP"];
+  const nC=labels.length;
+  const cellW=w/nC, cellH=h, PAD=32;
+  const DASHES={snn:[], cnn:[4,4], resnet:[1,4]};
+  // class prevalence (no-skill baseline) from SNN per_label support if present
+  const snn=rows.find(r=>r.model==="snn")||rows[0];
+  labels.forEach((lbl,ci)=>{
+    const ox=ci*cellW;
+    const pw=cellW-PAD*1.5, ph=cellH-PAD*1.5;
+    const x0=ox+PAD, y0=PAD*0.5;
+    ctx.strokeStyle=GRID; ctx.lineWidth=0.7;
+    [0,0.25,0.5,0.75,1.0].forEach(v=>{
+      ctx.beginPath(); ctx.moveTo(x0+v*pw,y0); ctx.lineTo(x0+v*pw,y0+ph); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x0,y0+ph-v*ph); ctx.lineTo(x0+pw,y0+ph-v*ph); ctx.stroke();
+    });
+    // prevalence baseline (no-skill): support / total
+    const pl=snn.per_label&&snn.per_label[lbl];
+    if (pl && pl.support!=null) {
+      // approximate total from any model's curve length unknown; use 2158 test set
+      const prev=Math.min(Math.max(pl.support/2158,0),1);
+      const by=y0+ph-prev*ph;
+      ctx.strokeStyle="rgba(255,255,255,0.18)"; ctx.lineWidth=0.8; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(x0,by); ctx.lineTo(x0+pw,by); ctx.stroke(); ctx.setLineDash([]);
+    }
+    rows.forEach(r=>{
+      if (!r.pr_curves||!r.pr_curves[lbl]) return;
+      const {precision,recall}=r.pr_curves[lbl];
+      const col=MODEL_COLOR[r.model]||"#aaa";
+      ctx.strokeStyle=col; ctx.lineWidth=r.model==="snn"?2:1.2;
+      ctx.setLineDash(DASHES[r.model]||[]);
+      ctx.beginPath();
+      recall.forEach((rc,i)=>{
+        const x=x0+rc*pw, y=y0+ph-precision[i]*ph;
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }); ctx.stroke(); ctx.setLineDash([]);
+    });
+    ctx.fillStyle=CLASS_COLORS[lbl]||"#ccc"; ctx.font="bold 13px Manrope,ui-sans-serif,sans-serif";
+    ctx.textAlign="center"; ctx.fillText(lbl, x0+pw/2, y0+14);
+    ctx.fillStyle="rgba(174,183,205,0.5)"; ctx.font="9px 'Space Mono',ui-monospace,monospace";
+    ctx.fillText(CLASS_DESC[lbl]||"", x0+pw/2, y0+26); ctx.textAlign="left";
+    ctx.fillStyle="rgba(174,183,205,0.4)"; ctx.font="9px 'Space Mono',ui-monospace,monospace";
+    ctx.fillText("recall", x0+pw*0.36, y0+ph+14);
+    ctx.save(); ctx.translate(x0-18, y0+ph*0.5); ctx.rotate(-Math.PI/2);
+    ctx.fillText("precision", -14, 0); ctx.restore();
+  });
+  const legendItems=[{model:"snn",dash:[]},{model:"cnn",dash:[4,4]},{model:"resnet",dash:[1,4]}];
+  legendItems.forEach((item,i)=>{
+    const lx=10+i*150, ly=h-10;
+    ctx.strokeStyle=MODEL_COLOR[item.model]; ctx.lineWidth=item.dash.length?1:2;
+    ctx.setLineDash(item.dash);
+    ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(lx+20,ly); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle="rgba(174,183,205,0.8)"; ctx.font="10px Manrope,ui-sans-serif,sans-serif";
     ctx.fillText(MODEL_LABEL[item.model], lx+24, ly+3);
   });
 }
@@ -446,6 +553,7 @@ function renderComparison(data) {
   drawPerClassBars(rows);
   drawEnergyBars(rows);
   drawROCCurves(rows);
+  drawPRCurves(rows);
 
   const snn=rows.find(r=>r.model==="snn");
   const cnn=rows.find(r=>r.model==="cnn");
@@ -464,12 +572,17 @@ function renderComparison(data) {
     const snnE_pj      = snn.energy_pj_neuromorphic;
     const cnnE_pj      = cnn.energy_pj_dense;
 
-    // Update all instances of the energy ratio
-    [$("heroEnergyRatio"),$("heroEnergyRatio2")].forEach(el=>{ if(el) el.textContent=energyRatio.toFixed(0)+"×"; });
-    // Update stat break with real numbers
+    // Drive every energy-ratio number from live data (hero, stat-break, prose)
+    const eRatio = Math.round(energyRatio);
+    [$("heroEnergyRatio"),$("heroEnergyRatio2")].forEach(el=>{
+      if(!el) return;
+      el.dataset.count = eRatio; el.dataset.suffix = "×";
+      countUp(el);
+    });
+    document.querySelectorAll(".js-eratio").forEach(el=>{ el.textContent = eRatio; });
+    // Update stat break silent-neuron % with real spike rate
     const sbItems=document.querySelectorAll(".sb-num");
     if(sbItems[0]) sbItems[0].textContent=(snn.spike_rate_mean!=null?(100-(snn.spike_rate_mean*100)).toFixed(0):87)+"%";
-    if(sbItems[2]) sbItems[2].textContent=energyRatio.toFixed(0)+"×";
 
     $("energyNote").innerHTML =
       `The SNN uses <strong>${energyRatio.toFixed(0)}× less</strong> estimated energy per inference
@@ -599,7 +712,7 @@ async function loadHistory() {
   const xof=(ep)=>PAD.l+(ep-minEp)/span*(w-PAD.l-PAD.r);
   const yof=(v)=>(h-PAD.b)-(v-0.3)/(1.0-0.3)*(h-PAD.t-PAD.b);
   // auroc axis labels
-  ctx.fillStyle="rgba(154,164,192,0.5)"; ctx.font="9px ui-monospace,monospace";
+  ctx.fillStyle="rgba(174,183,205,0.5)"; ctx.font="9px 'Space Mono',ui-monospace,monospace";
   for (let v=0.4;v<=0.95;v+=0.1) {
     const y=yof(v);
     ctx.fillText(v.toFixed(1), 2, y+3);
@@ -620,13 +733,13 @@ async function loadHistory() {
     });
   }
   // macro val AUROC
-  ctx.strokeStyle="#5ad7ff"; ctx.lineWidth=2.5; ctx.beginPath();
+  ctx.strokeStyle="#48cae4"; ctx.lineWidth=2.5; ctx.beginPath();
   aurocs.forEach((v,i)=>{
     const x=xof(xs[i]), y=yof(v);
     i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
   }); ctx.stroke();
   // running best
-  ctx.strokeStyle="rgba(109,240,168,0.9)"; ctx.setLineDash([5,4]); ctx.lineWidth=1.5; ctx.beginPath();
+  ctx.strokeStyle="#3ddc97"; ctx.setLineDash([5,4]); ctx.lineWidth=1.5; ctx.beginPath();
   let best=-Infinity;
   aurocs.forEach((v,i)=>{
     if(v>best)best=v;
@@ -635,7 +748,7 @@ async function loadHistory() {
   }); ctx.stroke(); ctx.setLineDash([]);
   // train loss (right axis, scaled to same visual range)
   const lossMax=Math.max(...losses.filter(Boolean),1), lossMin=Math.min(...losses.filter(Boolean),0);
-  ctx.strokeStyle="rgba(255,180,84,0.65)"; ctx.lineWidth=1.5; ctx.beginPath();
+  ctx.strokeStyle="#ffc44d"; ctx.lineWidth=1.5; ctx.beginPath();
   losses.forEach((v,i)=>{
     // map loss to [0.3,0.7] visual range
     const norm=(v-lossMin)/(lossMax-lossMin||1);
@@ -644,13 +757,13 @@ async function loadHistory() {
     i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
   }); ctx.stroke();
   // axis label
-  ctx.fillStyle="rgba(154,164,192,0.5)"; ctx.font="9px ui-monospace,monospace";
+  ctx.fillStyle="rgba(174,183,205,0.5)"; ctx.font="9px 'Space Mono',ui-monospace,monospace";
   ctx.fillText("epoch →", w-PAD.r+4, h-PAD.b+10);
   // legend (right side)
   const legendItems=[
-    {col:"#5ad7ff", label:"macro AUROC", dash:false},
-    {col:"rgba(109,240,168,0.9)", label:"best", dash:true},
-    {col:"rgba(255,180,84,0.65)", label:"train loss", dash:false},
+    {col:"#48cae4", label:"macro AUROC", dash:false},
+    {col:"#3ddc97", label:"best", dash:true},
+    {col:"#ffc44d", label:"train loss", dash:false},
     ...LABELS5.map(l=>({col:(CLASS_COLORS[l]||"#888")+"90", label:l, dash:false})),
   ];
   legendItems.forEach((item,i)=>{
@@ -659,7 +772,7 @@ async function loadHistory() {
     if (item.dash) ctx.setLineDash([3,3]);
     ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(lx+14,ly); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle="rgba(154,164,192,0.7)"; ctx.font="9px ui-monospace,monospace";
+    ctx.fillStyle="rgba(174,183,205,0.7)"; ctx.font="9px 'Space Mono',ui-monospace,monospace";
     ctx.fillText(item.label, lx+16, ly+3);
   });
   const cur=aurocs[aurocs.length-1];
@@ -715,8 +828,147 @@ function paintAll(result) {
     `10 s · ${result.fs||100} Hz · ecg_id ${result.ecg_id??"(uploaded)"}`;
 }
 
+// ═══ chrome: nav rail, scroll-spy, progress, reveal, count-up ═════════
+const SECTIONS = [
+  { id:"top",      label:"Top"      },
+  { id:"problem",  label:"Problem"  },
+  { id:"insight",  label:"Insight"  },
+  { id:"data",     label:"Data"     },
+  { id:"network",  label:"Network"  },
+  { id:"demo",     label:"Demo"     },
+  { id:"results",  label:"Results"  },
+  { id:"energy",   label:"Energy"   },
+  { id:"training", label:"Training" },
+];
+
+function buildSpine() {
+  const spine = $("spine");
+  if (!spine) return;
+  spine.innerHTML = SECTIONS.map(s =>
+    `<button class="spine-node" data-target="${s.id}" title="${s.label}">
+       <span class="spine-dot"></span><span class="spine-label">${s.label}</span>
+     </button>`).join("");
+  spine.querySelectorAll(".spine-node").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const el=$(btn.dataset.target);
+      if (el) el.scrollIntoView({behavior:"smooth", block:"start"});
+    });
+  });
+}
+
+function onScroll() {
+  // progress bar
+  const sc = document.documentElement;
+  const max = sc.scrollHeight - sc.clientHeight;
+  const frac = max>0 ? sc.scrollTop/max : 0;
+  const bar = $("scrollProgress");
+  if (bar) bar.style.transform = `scaleX(${frac})`;
+  // scroll-spy: active section is the last one whose top crossed 38% vp
+  const mark = window.innerHeight * 0.38;
+  let active = SECTIONS[0].id;
+  for (const s of SECTIONS) {
+    const el = $(s.id);
+    if (el && el.getBoundingClientRect().top <= mark) active = s.id;
+  }
+  document.querySelectorAll(".spine-node").forEach(n=>{
+    n.classList.toggle("active", n.dataset.target===active);
+  });
+}
+
+function setupReveal() {
+  const els = document.querySelectorAll(".reveal");
+  if (!("IntersectionObserver" in window)) { els.forEach(e=>e.classList.add("in")); return; }
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if (e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); }});
+  }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
+  els.forEach(e=>io.observe(e));
+}
+
+function countUp(el) {
+  const target = parseFloat(el.dataset.count);
+  const suffix = el.dataset.suffix || "";
+  if (isNaN(target)) return;
+  const dur = 1100, t0 = performance.now();
+  const ease = t => 1 - Math.pow(1-t, 3);
+  function step(now){
+    const p = Math.min((now-t0)/dur, 1);
+    el.textContent = Math.round(target*ease(p)).toLocaleString() + suffix;
+    if (p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function setupCountUp() {
+  const nums = document.querySelectorAll("[data-count]");
+  if (!("IntersectionObserver" in window)) { nums.forEach(countUp); return; }
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if (e.isIntersecting){ countUp(e.target); io.unobserve(e.target); }});
+  }, { threshold: 0.6 });
+  nums.forEach(n=>io.observe(n));
+}
+
+// animated hero ECG trace drifting across the background
+function setupHeroEcg() {
+  const c = $("heroEcg");
+  if (!c) return;
+  const ctx = c.getContext("2d");
+  let raf, t = 0, ratio = window.devicePixelRatio || 1;
+  function resize(){
+    ratio = window.devicePixelRatio || 1;
+    c.width = Math.floor(c.clientWidth*ratio);
+    c.height = Math.floor(c.clientHeight*ratio);
+    ctx.setTransform(ratio,0,0,ratio,0,0);
+  }
+  resize();
+  window.addEventListener("resize", resize);
+  // one synthetic PQRST beat as a function of phase 0..1
+  function beat(ph){
+    const g=(c,w,a)=>a*Math.exp(-Math.pow((ph-c)/w,2));
+    return g(0.18,0.022,0.12)            // P
+         - g(0.37,0.008,0.18)            // Q
+         + g(0.40,0.010,1.0)             // R
+         - g(0.43,0.010,0.28)            // S
+         + g(0.62,0.040,0.30);           // T
+  }
+  function frame(){
+    const w=c.clientWidth, h=c.clientHeight;
+    ctx.clearRect(0,0,w,h);
+    const rows=3, beatsPerRow=4;
+    for (let r=0;r<rows;r++){
+      const yMid = h*(0.28+0.22*r);
+      const col = r===0 ? "#ff5470" : r===1 ? "#48cae4" : "#ffc44d";
+      ctx.strokeStyle = col; ctx.globalAlpha = 0.16; ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      const speed = 0.00018*(1+r*0.15);
+      for (let x=0;x<=w;x+=2){
+        const ph = ((x/w)*beatsPerRow - t*speed*beatsPerRow + r*0.3) % 1;
+        const y = yMid - beat((ph+1)%1)*h*0.16;
+        x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    t += 16;
+    raf = requestAnimationFrame(frame);
+  }
+  // pause when hero off-screen
+  const io = new IntersectionObserver((e)=>{
+    if (e[0].isIntersecting){ if(!raf) raf=requestAnimationFrame(frame); }
+    else { cancelAnimationFrame(raf); raf=null; }
+  }, {threshold:0.02});
+  io.observe(c);
+}
+
 // ─── main ─────────────────────────────────────────────────────────────
 async function main() {
+  buildSpine();
+  setupReveal();
+  setupCountUp();
+  setupHeroEcg();
+  onScroll();
+  window.addEventListener("scroll", onScroll, { passive: true });
+  const brand = $("brandHome");
+  if (brand) brand.addEventListener("click",()=>$("top").scrollIntoView({behavior:"smooth"}));
+
   await refreshStatus();
   await loadExamples();
   await loadHistory();
@@ -734,15 +986,17 @@ async function main() {
   setTimeout(()=>{
     const v=$("examplePicker").value; if(v) runFromExample(parseInt(v,10));
   }, 800);
+  let rz;
   window.addEventListener("resize",()=>{
-    if (LAST) paintAll(LAST);
-    if (CMP_DATA) {
-      renderComparison(CMP_DATA);
-    }
-    loadHistory();
+    clearTimeout(rz);
+    rz=setTimeout(()=>{
+      if (LAST) paintAll(LAST);
+      if (CMP_DATA) renderComparison(CMP_DATA);
+      loadHistory();
+    }, 180);
   });
 }
 
 main().catch(err=>{
-  document.body.innerHTML=`<pre style="color:#ff5b6e;padding:24px">${err.stack||err}</pre>`;
+  document.body.innerHTML=`<pre style="color:#ff5470;padding:24px;font-family:monospace">${err.stack||err}</pre>`;
 });
