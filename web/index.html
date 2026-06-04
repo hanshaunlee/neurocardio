@@ -46,7 +46,7 @@
       while running on a chip the size of a postage stamp.
     </p>
     <div class="hero-finding" id="heroFinding">
-      <div class="hf-number" id="heroEnergyRatio">268×</div>
+      <div class="hf-number" id="heroEnergyRatio">287×</div>
       <div class="hf-label">less energy per diagnosis<br>for a 3.6 pp accuracy cost</div>
     </div>
   </div>
@@ -129,7 +129,7 @@
   </div>
   <div class="sb-divider"></div>
   <div class="sb-item">
-    <div class="sb-num" id="heroEnergyRatio2">268×</div>
+    <div class="sb-num" id="heroEnergyRatio2">287×</div>
     <div class="sb-desc">total energy reduction<br>per ECG inference</div>
   </div>
 </div>
@@ -460,7 +460,7 @@
     "effective" meaning we measured the actual per-layer spike rates on the validation set
     and multiplied. At 0.1 pJ/SOP that's <strong>4.06 µJ</strong> per ECG window.
     The CNN performs 294.6 million MACs at 3.7 pJ each — <strong>1,090 µJ</strong>.
-    That's a factor of <strong><span class="js-eratio">268</span>×</strong>, driven by two compounding effects: fewer total ops,
+    That's a factor of <strong><span class="js-eratio">287</span>×</strong>, driven by two compounding effects: fewer total ops,
     and cheaper ops per unit.
   </p>
 </div>
@@ -468,7 +468,7 @@
 <section class="card-inset reveal">
   <div class="card-header">
     <h3>Energy per inference</h3>
-    <div class="card-sub">SNN energy assumes neuromorphic hardware (Loihi). CNN and ResNet assume dense ASIC. The <span class="js-eratio">268</span>× gap comes from both fewer ops (7.25×) and cheaper ops per unit (37×).</div>
+    <div class="card-sub">SNN energy assumes neuromorphic hardware (Loihi). CNN and ResNet assume dense ASIC. The <span class="js-eratio">287</span>× gap comes from both fewer ops (7.8×) and cheaper ops per unit (37×).</div>
   </div>
   <canvas id="energyBarCanvas" height="140"></canvas>
   <div id="energyNote" class="compare-note" style="margin-top:12px"></div>
@@ -478,7 +478,7 @@
      THE IMPLICATION
 ══════════════════════════════════════════════════════════════════ -->
 <div class="prose-section reveal">
-  <h2>What does <span class="js-eratio">268</span>× actually mean?</h2>
+  <h2>What does <span class="js-eratio">287</span>× actually mean?</h2>
   <p>
     Here's a concrete scenario: a wearable Holter monitor analyzing a 10-second ECG window
     every 10 seconds — 8,640 inferences over a 24-hour monitoring session.

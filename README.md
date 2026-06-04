@@ -244,6 +244,12 @@ FP32 MAC vs. 0.1 pJ per synaptic operation (SOP) on event-driven silicon
 (Davies et al., Loihi). SOPs are weighted by the **measured** spike rate on the
 test fold, not a simulated proxy.
 
+The ~287× headline is **two effects multiplied**, not one: ~7.8× fewer
+operations (sparsity — neurons only compute when they fire) **×** ~37× cheaper
+per operation (a spike accumulate at 0.1 pJ vs a dense multiply-accumulate at
+3.7 pJ). The per-op cost ratio is the larger of the two factors, so the energy
+win is far bigger than the operation-count win alone would suggest.
+
 | Metric | SNN | CNN1D | vs CNN |
 |---|---:|---:|---:|
 | Effective ops / inference | **~37.9 M SOPs** | 294.6 M MACs | **~7.8× fewer** |
