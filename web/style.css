@@ -338,7 +338,7 @@ canvas { width: 100%; display: block; }
 .cr-cell { position: relative; }
 .cr-bar { height: 22px; border-radius: 6px; background: rgba(255,255,255,0.045); overflow: hidden; position: relative; }
 .cr-fill { height: 100%; border-radius: 6px; transition: width 500ms cubic-bezier(.2,.8,.2,1); opacity: 0.85; }
-.cr-pval { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); font: 700 11px var(--mono); color: var(--ink); }
+.cr-pval { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); font: 700 11px var(--mono); color: var(--ink); text-shadow: 0 1px 2px rgba(0,0,0,0.6), 0 0 2px rgba(0,0,0,0.4); }
 .cr-cell.firing .cr-bar { box-shadow: 0 0 0 1px currentColor inset; }
 .cr-truth { text-align: center; font-size: 16px; }
 .cr-truth .yes { color: var(--norm); }
