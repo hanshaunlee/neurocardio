@@ -5,6 +5,7 @@ trained on PTB-XL (21,837 cardiologist-validated recordings), evaluated
 inter-patient, and served as a public Modal web app.
 
 > **Live demo:** https://hanshaunlee--neurocardio-web.modal.run
+> **Demo video:** https://drive.google.com/file/d/1zwY6I8vm8Rs1Di5xvn6-NCSg8Z1rJ69E/view?usp=sharing
 > **One-line pitch:** clinical-grade ECG diagnosis at **~287× less estimated
 > energy per inference** than a parameter-matched CNN, for a **3.6 pp** macro-AUROC
 > price — a concrete data point on the neuromorphic accuracy/energy trade-off.
@@ -39,7 +40,7 @@ that backs it. Detail follows in the rest of the README.
 | **Use cases & impact** | [Use cases & impact](#use-cases--impact) |
 | **Evaluation & evidence** | [Results & evaluation](#results--evaluation) · [Baseline comparison](#baseline-comparison) · [Failure analysis](#failure-analysis) |
 | **What's next** | [Roadmap — what I'd add next](#roadmap--what-id-add-next) |
-| **Communication** | This README · the [live web demo](https://hanshaunlee--neurocardio-web.modal.run) · reproducible [Run it](#run-it) |
+| **Communication** | This README · the [live web demo](https://hanshaunlee--neurocardio-web.modal.run) · [demo video](https://drive.google.com/file/d/1zwY6I8vm8Rs1Di5xvn6-NCSg8Z1rJ69E/view?usp=sharing) · reproducible [Run it](#run-it) |
 | **Process & disclosure** | [AI usage & attribution](#ai-usage-collaborators--integrity) · [Honest framing](#honest-framing) · [References](#references) |
 
 ---
@@ -74,8 +75,8 @@ identical split and pipeline.
    would mix binary tensors and break the binary-spike abstraction.
    Each S-TCN block instead injects its skip path into the *membrane
    potential* of its output LIF neuron, scaled by a learnable per-channel
-   sigmoid gate `g = σ(α)` (initialised at `α=0`). Spikes between blocks
-   remain strictly binary; the optimiser learns, per channel, whether the
+   sigmoid gate `g = σ(α)` (initialized at `α=0`). Spikes between blocks
+   remain strictly binary; the optimizer learns, per channel, whether the
    block should be transform-dominated or residual-dominated.
 
 2. **Spiking gate-attention pooling.** Temporal pooling is driven by a
@@ -123,7 +124,7 @@ Two label spaces are supported:
 | `diagnostic_superclass` | 5 | `NORM`, `MI`, `STTC`, `CD`, `HYP` |
 | `diagnostic_subclass`   | 24 | `AMI`, `IMI`, `LMI`, `STTC`, `LAFB`, `IRBBB`, `1AVB`, … |
 
-Training optimises macro-AUROC across the chosen label set (the metric
+Training optimizes macro-AUROC across the chosen label set (the metric
 used in Strodthoff et al., *PTB-XL benchmark* 2020).
 
 ## Layout
@@ -299,7 +300,7 @@ modal run modal_app/app.py::compare_models \
   --run-names "main,cnn_baseline,resnet_baseline"
 ```
 
-The web demo runs **all three** models on the same normalised signal at
+The web demo runs **all three** models on the same normalized signal at
 inference time and shows a side-by-side 3-model readout with per-model
 exact-match verdicts against ground truth.
 
@@ -318,7 +319,7 @@ Browser ──HTTPS──► Modal ASGI app (FastAPI, @modal.asgi_app)
                      ├─ GET  /comparison    → results/comparison.json (live headline numbers)
                      ├─ GET  /examples      → PTB-XL test-fold sample list
                      ├─ GET  /infer_example?ecg_id=…  ┐ load best.pt for snn + cnn + resnet,
-                     ├─ POST /infer_upload (a .npy/.csv)┘ run all 3 on the SAME normalised
+                     ├─ POST /infer_upload (a .npy/.csv)┘ run all 3 on the SAME normalized
                      │                                    signal → probs + spike traces
                      └─ GET  /status,/warm,/history     → run/health introspection
                      ▼
@@ -331,7 +332,7 @@ Key product decisions:
   the demo costs nothing when nobody is using it and warms a T4 on the first
   request — appropriate for a public, bursty demo rather than a paid SLA.
 - **One signal, three models, honest verdicts.** Every inference call runs the
-  SNN *and* both dense baselines on the identical normalised input and returns
+  SNN *and* both dense baselines on the identical normalized input and returns
   `compare_probs`, so the side-by-side accuracy/energy story in the UI is
   computed live, not pre-rendered.
 - **The Volume is the source of truth.** Checkpoints and `comparison.json` live
@@ -437,7 +438,7 @@ Evidence of genuine iteration over time:
 - **The pivot.** The project started as
   [**UniMarket**](https://github.com/hanshaunlee/unimarket), a framework for
   learning neural dynamics from electrophysiology data. I kept the through-line —
-  biologically-grounded, brain-inspired computation — but pivoted from *analysing*
+  biologically-grounded, brain-inspired computation — but pivoted from *analyzing*
   neural dynamics to *deploying* them as spiking networks on a concrete clinical
   task with a measurable energy payoff. NeuroCardio is the result of that pivot.
 - **v1 → v2.** `archive/cardiospike_mitbih/` is the first-gen single-beat SNN on
@@ -475,17 +476,17 @@ In rough priority order, the things that would most strengthen the project:
    operation-count estimate under published per-op constants. Running the trained
    model on Loihi 2 (or BrainChip Akida) would convert the **~287×** estimate
    into a measured Joules figure and validate the central claim end-to-end.
-3. **Quantisation + true on-device deploy.** Pair the SNN with int8 weights and a
+3. **Quantization + true on-device deploy.** Pair the SNN with int8 weights and a
    genuine edge target (a microcontroller demo, or an Akida dev kit) so the
    "wearable" use case is demonstrated, not just argued.
 4. **Harder label space & calibration.** Move from the 5 super-classes to the
    24-subclass set (already supported in `data.py`), and add probability
    calibration + per-class operating-point selection — clinically the threshold
    matters as much as the AUROC.
-5. **Robustness & generalisation.** Cross-dataset evaluation (e.g. transfer to
+5. **Robustness & generalization.** Cross-dataset evaluation (e.g. transfer to
    CPSC2018 / Chapman-Shaoxing) and stress tests under lead dropout and noise,
    to show the spiking model degrades gracefully on out-of-distribution leads.
-6. **Latency honesty in software.** A fused/vectorised LIF kernel (or a
+6. **Latency honesty in software.** A fused/vectorized LIF kernel (or a
    `torch.compile` / CUDA path) to remove the Python-loop simulation overhead, so
    wall-clock latency stops being a misleading artifact even off neuromorphic
    hardware.
@@ -502,7 +503,7 @@ In rough priority order, the things that would most strengthen the project:
   count argument under published per-op energy constants, **not** a Joules
   measurement on real silicon. The web demo says so explicitly.
 - The web demo's inference endpoint runs the **same** snntorch model on
-  Modal — there is no separate inference model, no quantisation, no
+  Modal — there is no separate inference model, no quantization, no
   TFLite trick.
 
 ## AI usage, collaborators & integrity
