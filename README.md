@@ -35,8 +35,10 @@ that backs it. Detail follows in the rest of the README.
 | Topic | Where it's addressed |
 |---|---|
 | **Problem & insight** | [Problem & motivation](#problem--motivation) · [What's novel](#whats-novel) |
-| **What was built** | [Architecture](#architecture) · [Repo layout](#layout) · [Run it](#run-it) · live demo |
+| **What was built** | [Architecture](#architecture) · [Serving architecture](#how-the-live-product-works-serving-architecture) · [Repo layout](#layout) · [Run it](#run-it) · live demo |
+| **Use cases & impact** | [Use cases & impact](#use-cases--impact) |
 | **Evaluation & evidence** | [Results & evaluation](#results--evaluation) · [Baseline comparison](#baseline-comparison) · [Failure analysis](#failure-analysis) |
+| **What's next** | [Roadmap — what I'd add next](#roadmap--what-id-add-next) |
 | **Communication** | This README · the [live web demo](https://hanshaunlee--neurocardio-web.modal.run) · reproducible [Run it](#run-it) |
 | **Process & disclosure** | [AI usage & attribution](#ai-usage-collaborators--integrity) · [Honest framing](#honest-framing) · [References](#references) |
 
@@ -301,6 +303,80 @@ The web demo runs **all three** models on the same normalised signal at
 inference time and shows a side-by-side 3-model readout with per-model
 exact-match verdicts against ground truth.
 
+## How the live product works (serving architecture)
+
+The product is a single self-contained Modal app (`modal_app/app.py`); the same
+file defines training, evaluation, and the public web service, so there is no
+second codebase and no "export to a different runtime" step — **the deployed
+model is the trained model.**
+
+```
+Browser ──HTTPS──► Modal ASGI app (FastAPI, @modal.asgi_app)
+                     │   T4 GPU · min_containers=0 · scaledown_window=5 min
+                     │   (idle → scales to zero → $0; cold-starts on demand)
+                     ├─ GET  /              → static SPA (web/index.html, app.js, style.css)
+                     ├─ GET  /comparison    → results/comparison.json (live headline numbers)
+                     ├─ GET  /examples      → PTB-XL test-fold sample list
+                     ├─ GET  /infer_example?ecg_id=…  ┐ load best.pt for snn + cnn + resnet,
+                     ├─ POST /infer_upload (a .npy/.csv)┘ run all 3 on the SAME normalised
+                     │                                    signal → probs + spike traces
+                     └─ GET  /status,/warm,/history     → run/health introspection
+                     ▼
+            neurocardio-vol Modal Volume  (best.pt × 3, comparison.json, cache)
+```
+
+Key product decisions:
+
+- **Scale-to-zero economics.** `min_containers=0` + a 5-minute idle window means
+  the demo costs nothing when nobody is using it and warms a T4 on the first
+  request — appropriate for a public, bursty demo rather than a paid SLA.
+- **One signal, three models, honest verdicts.** Every inference call runs the
+  SNN *and* both dense baselines on the identical normalised input and returns
+  `compare_probs`, so the side-by-side accuracy/energy story in the UI is
+  computed live, not pre-rendered.
+- **The Volume is the source of truth.** Checkpoints and `comparison.json` live
+  on `neurocardio-vol` and are mounted read-only into the web function, so a new
+  training run + `compare_models` updates the live demo with no redeploy.
+- **Graceful degradation.** Baseline inference is wrapped per-model in
+  try/except, so a baseline failure never breaks the primary SNN readout, and an
+  older deploy without `compare_probs` falls back to an SNN-only view.
+
+## Use cases & impact
+
+NeuroCardio is a research demonstrator, not a cleared medical device — but the
+trade-off it measures is the enabling step for a class of products that dense
+GPU models cannot reach on a power budget:
+
+- **Always-on wearable / patch ECG.** A single-cell or energy-harvested cardiac
+  patch can't sustain a watts-scale GPU. An inference that costs **microjoules**
+  rather than millijoules is the difference between "phone offloads to the cloud
+  every few seconds" and "the device screens continuously on-device for weeks."
+- **Implantable & edge monitors.** Loop recorders and similar implants are
+  energy-starved by design; event-driven spiking inference is one of the few
+  routes to running a real multi-label classifier inside that envelope.
+- **Privacy-preserving, offline triage.** Because diagnosis can run locally at
+  this energy cost, raw ECG need never leave the device — useful for ambulatory
+  monitoring and for low-connectivity / resource-limited settings where
+  cloud round-trips aren't reliable.
+- **A reusable, honest neuromorphic benchmark.** Beyond the device story, the
+  repo is a clean, reproducible data point on *what spiking actually costs in
+  accuracy and buys in energy* on a competitive clinical benchmark — trained
+  against parameter-matched baselines on an identical split. That comparison
+  methodology (and the `compute.py` SOP/energy accounting) is the part most
+  directly reusable by other SNN researchers.
+
+**The societal value is access, not another accuracy point.** Near-cardiologist
+ECG reading already exists; what doesn't yet exist is delivering it continuously,
+privately, and cheaply enough to put it on the body of someone who isn't already
+in a hospital. Sparse, event-driven computation is a credible path there, and
+this project quantifies the price of admission (**−3.6 pp macro-AUROC**) and the
+payoff (**~287× less estimated energy**) instead of hand-waving either.
+
+> **Scope & safety.** These are envisioned uses, not validated clinical claims.
+> The model is trained and evaluated only on PTB-XL super-classes and is not
+> regulatory-cleared; nothing here should be used for actual diagnosis. See
+> [Honest framing](#honest-framing).
+
 ## Modal resources
 
 | Resource          | When                                  |
@@ -386,6 +462,33 @@ Evidence of genuine iteration over time:
 > squashed commits rather than a long incremental history. The development
 > artifacts above (archived v1, resumable checkpoint logic, smoke-test run
 > outputs, the deployed live demo) are the honest record of iteration.
+
+## Roadmap — what I'd add next
+
+In rough priority order, the things that would most strengthen the project:
+
+1. **Close the accuracy gap.** The −3.6 pp is the headline cost. The most
+   promising levers are a longer/threshold-annealed LIF time-constant schedule,
+   a deeper stem, and distillation from the CNN baseline into the SNN — the
+   sparsity budget has room before energy regresses.
+2. **Measure on real neuromorphic silicon.** Every energy number here is an
+   operation-count estimate under published per-op constants. Running the trained
+   model on Loihi 2 (or BrainChip Akida) would convert the **~287×** estimate
+   into a measured Joules figure and validate the central claim end-to-end.
+3. **Quantisation + true on-device deploy.** Pair the SNN with int8 weights and a
+   genuine edge target (a microcontroller demo, or an Akida dev kit) so the
+   "wearable" use case is demonstrated, not just argued.
+4. **Harder label space & calibration.** Move from the 5 super-classes to the
+   24-subclass set (already supported in `data.py`), and add probability
+   calibration + per-class operating-point selection — clinically the threshold
+   matters as much as the AUROC.
+5. **Robustness & generalisation.** Cross-dataset evaluation (e.g. transfer to
+   CPSC2018 / Chapman-Shaoxing) and stress tests under lead dropout and noise,
+   to show the spiking model degrades gracefully on out-of-distribution leads.
+6. **Latency honesty in software.** A fused/vectorised LIF kernel (or a
+   `torch.compile` / CUDA path) to remove the Python-loop simulation overhead, so
+   wall-clock latency stops being a misleading artifact even off neuromorphic
+   hardware.
 
 ## Honest framing
 
